@@ -43,12 +43,12 @@
 
 <script>
 window.onload = function() {
-  // 🔑 Replace these with your own project details
+  // ✅ Your Supabase details
   const supabaseUrl = 'https://fhokwoazuhkwrkrweddd.supabase.co';
   const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc';
-  
-  const { createClient } = supabase;
-  const client = createClient(supabaseUrl, supabaseKey);
+
+  // ✅ Correct way in v2
+  const client = supabase.createClient(supabaseUrl, supabaseKey);
 
   // Load existing messages
   async function loadMessages() {
@@ -64,7 +64,6 @@ window.onload = function() {
     }
   }
 
-  // Add a message to the chat box
   function addMessage(data) {
     const msgDiv = document.getElementById('messages');
     const p = document.createElement('p');
@@ -84,13 +83,13 @@ window.onload = function() {
     )
     .subscribe();
 
-  // Send a new message
+  // Send new message
   document.getElementById('sendBtn').onclick = async () => {
     const username = document.getElementById('username').value.trim();
     const message = document.getElementById('message').value.trim();
 
     if (!username || !message) {
-      alert('Please enter your name and a message.');
+      alert('Please enter your name and message.');
       return;
     }
 
@@ -105,7 +104,7 @@ window.onload = function() {
     }
   };
 
-  // Load chat history when the page loads
+  // Load chat history
   loadMessages();
 };
 </script>
