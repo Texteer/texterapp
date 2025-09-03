@@ -7,7 +7,6 @@
   const supabaseurl = ('https://fhokwoazuhkwrkrweddd.supabase.co')
   const supabasekey = ('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc')
   const supabase = supabase.createClient(supabaseurl, supabasekey);
-  /
   async function loadMessages() {
     const { data, error } = await supabase
       .from('messages')
@@ -66,5 +65,6 @@
   // Load existing messages on page load
   loadMessages();
 </script>
+
 
 
