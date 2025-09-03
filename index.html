@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>Supabase Chat App</title>
   <style>
     body {
@@ -24,6 +25,7 @@
     }
     button {
       padding: 10px 20px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -36,23 +38,25 @@
 <input type="text" id="message" placeholder="Type your message" />
 <button id="sendBtn">Send</button>
 
-<!-- Load the Supabase library -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/supabase.min.js"></script>
+<!-- Load Supabase v2 -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 window.onload = function() {
+  // 🔑 Replace these with your own project details
   const supabaseUrl = 'https://fhokwoazuhkwrkrweddd.supabase.co';
   const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc';
-
-  // Now create the client
-  const supabase = createClient(supabaseUrl, supabaseKey);
+  
+  const { createClient } = supabase;
+  const client = createClient(supabaseUrl, supabaseKey);
 
   // Load existing messages
   async function loadMessages() {
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from('messages')
       .select('*')
       .order('created_at', { ascending: true });
+
     if (error) {
       console.error('Error loading messages:', error);
     } else {
@@ -60,6 +64,7 @@ window.onload = function() {
     }
   }
 
+  // Add a message to the chat box
   function addMessage(data) {
     const msgDiv = document.getElementById('messages');
     const p = document.createElement('p');
@@ -68,38 +73,39 @@ window.onload = function() {
     msgDiv.scrollTop = msgDiv.scrollHeight;
   }
 
-  // Subscribe to new messages
-  supabase
-    .from('messages')
-    .on('INSERT', payload => {
-      addMessage(payload.new);
-    })
+  // Subscribe to new messages (Realtime)
+  client
+    .channel('public:messages')
+    .on('postgres_changes', 
+      { event: 'INSERT', schema: 'public', table: 'messages' },
+      (payload) => {
+        addMessage(payload.new);
+      }
+    )
     .subscribe();
 
-  // Send message
+  // Send a new message
   document.getElementById('sendBtn').onclick = async () => {
     const username = document.getElementById('username').value.trim();
     const message = document.getElementById('message').value.trim();
+
     if (!username || !message) {
-      alert('Please enter your name and message.');
+      alert('Please enter your name and a message.');
       return;
     }
-    try {
-      const { error } = await supabase
-        .from('messages')
-        .insert({ username: username, message: message });
-      if (error) {
-        alert('Error: ' + error.message);
-      } else {
-        alert('Message sent!');
-        document.getElementById('message').value = '';
-      }
-    } catch (err) {
-      alert('Error: ' + err.message);
+
+    const { error } = await client
+      .from('messages')
+      .insert([{ username, message }]);
+
+    if (error) {
+      alert('Error: ' + error.message);
+    } else {
+      document.getElementById('message').value = '';
     }
   };
 
-  // Load messages initially
+  // Load chat history when the page loads
   loadMessages();
 };
 </script>
