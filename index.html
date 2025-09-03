@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Supabase Chat App</title>
+  <title>Chat App</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -29,24 +29,24 @@
 </head>
 <body>
 
-<h2>Supabase Chat</h2>
+<h2>Chat</h2>
 
-<input type="text" id="username" placeholder="Enter your name" />
+<input type="text" id="username" placeholder="Your name" />
 <div id="messages"></div>
-<input type="text" id="message" placeholder="Type your message" />
+<input type="text" id="message" placeholder="Your message" />
 <button id="sendBtn">Send</button>
 
-<!-- Load Supabase library -->
+<!-- Load the Supabase library -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/supabase.min.js"></script>
 
 <!-- Your custom script -->
 <script>
-  // Initialize Supabase with your project details
+  // Initialize Supabase after the library loads
   const supabaseUrl = 'https://fhokwoazuhkwrkrweddd.supabase.co'; // e.g., 'https://xyzcompany.supabase.co'
   const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc'; // your anon key
   const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-  // Function to load existing messages
+  // Load existing messages
   async function loadMessages() {
     const { data, error } = await supabase
       .from('messages')
@@ -59,7 +59,7 @@
     }
   }
 
-  // Function to add message to display
+  // Add message to display
   function addMessage(data) {
     const msgDiv = document.getElementById('messages');
     const p = document.createElement('p');
@@ -68,7 +68,7 @@
     msgDiv.scrollTop = msgDiv.scrollHeight;
   }
 
-  // Subscribe to real-time inserts
+  // Subscribe to real-time updates
   supabase
     .from('messages')
     .on('INSERT', payload => {
@@ -101,7 +101,7 @@
     }
   };
 
-  // Load existing messages on page load
+  // Load messages on page load
   loadMessages();
 </script>
 
