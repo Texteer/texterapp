@@ -43,11 +43,9 @@
 
 <script>
 window.onload = function() {
-  // ✅ Your Supabase details
+  // ✅ Your Supabase project details
   const supabaseUrl = 'https://fhokwoazuhkwrkrweddd.supabase.co';
   const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc';
-
-  // ✅ Correct way in v2
   const client = supabase.createClient(supabaseUrl, supabaseKey);
 
   // Load existing messages
@@ -60,10 +58,12 @@ window.onload = function() {
     if (error) {
       console.error('Error loading messages:', error);
     } else {
+      document.getElementById('messages').innerHTML = '';
       data.forEach(addMessage);
     }
   }
 
+  // Add message to chat window
   function addMessage(data) {
     const msgDiv = document.getElementById('messages');
     const p = document.createElement('p');
@@ -72,10 +72,11 @@ window.onload = function() {
     msgDiv.scrollTop = msgDiv.scrollHeight;
   }
 
-  // Subscribe to new messages (Realtime)
+  // ✅ Realtime subscription (no refresh needed)
   client
-    .channel('public:messages')
-    .on('postgres_changes', 
+    .channel('room1')
+    .on(
+      'postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'messages' },
       (payload) => {
         addMessage(payload.new);
@@ -83,7 +84,7 @@ window.onload = function() {
     )
     .subscribe();
 
-  // Send new message
+  // Send message
   document.getElementById('sendBtn').onclick = async () => {
     const username = document.getElementById('username').value.trim();
     const message = document.getElementById('message').value.trim();
@@ -104,7 +105,7 @@ window.onload = function() {
     }
   };
 
-  // Load chat history
+  // Initial load
   loadMessages();
 };
 </script>
