@@ -73,16 +73,20 @@ window.onload = function() {
   }
 
   // ✅ Realtime subscription (no refresh needed)
-  client
-    .channel('room1')
-    .on(
-      'postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'messages' },
-      (payload) => {
-        addMessage(payload.new);
-      }
-    )
-    .subscribe();
+client
+  .channel('messages-channel')
+  .on(
+    'postgres_changes',
+    { event: 'INSERT', schema: 'public', table: 'messages' },
+    (payload) => {
+      console.log("Realtime payload:", payload); // debug
+      addMessage(payload.new);
+    }
+  )
+  .subscribe((status) => {
+    console.log("Subscription status:", status);
+  });
+
 
   // Send message
   document.getElementById('sendBtn').onclick = async () => {
@@ -112,3 +116,4 @@ window.onload = function() {
 
 </body>
 </html>
+
