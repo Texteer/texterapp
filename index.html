@@ -36,16 +36,15 @@
 <input type="text" id="message" placeholder="Type your message" />
 <button id="sendBtn">Send</button>
 
-<!-- Load the Supabase library first -->
+<!-- Load the Supabase library -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/supabase.min.js"></script>
 
-<!-- Your custom script that uses createClient -->
 <script>
-  // Your Supabase project info
+window.onload = function() {
   const supabaseUrl = 'https://fhokwoazuhkwrkrweddd.supabase.co';
   const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc';
 
-  // Initialize supabase client
+  // Now create the client
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   // Load existing messages
@@ -61,7 +60,6 @@
     }
   }
 
-  // Function to add message to DOM
   function addMessage(data) {
     const msgDiv = document.getElementById('messages');
     const p = document.createElement('p');
@@ -78,22 +76,20 @@
     })
     .subscribe();
 
-  // Send message handler
+  // Send message
   document.getElementById('sendBtn').onclick = async () => {
     const username = document.getElementById('username').value.trim();
     const message = document.getElementById('message').value.trim();
-
     if (!username || !message) {
       alert('Please enter your name and message.');
       return;
     }
-
     try {
       const { error } = await supabase
         .from('messages')
         .insert({ username: username, message: message });
       if (error) {
-        alert('Error sending message: ' + error.message);
+        alert('Error: ' + error.message);
       } else {
         alert('Message sent!');
         document.getElementById('message').value = '';
@@ -103,8 +99,9 @@
     }
   };
 
-  // Load messages on page load
+  // Load messages initially
   loadMessages();
+};
 </script>
 
 </body>
