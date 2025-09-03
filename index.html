@@ -1,10 +1,10 @@
 <script>
   // Initialize Supabase
-  const supabaseUrl = 'https://fhokwoazuhkwrkrweddd.supabase.co'; // <-- replace with your URL
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc'; // <-- replace with your key
+  const supabaseUrl = 'https://fhokwoazuhkwrkrweddd.supabase.co'; // <-- Replace with your URL
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc'; // <-- Replace with your key
   const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-  // Load existing messages
+  // Function to load existing messages
   async function loadMessages() {
     const { data, error } = await supabase
       .from('messages')
@@ -12,7 +12,6 @@
       .order('created_at', { ascending: true });
     if (error) {
       console.error('Error loading messages:', error);
-      alert('Error loading messages: ' + error.message);
     } else {
       data.forEach(addMessage);
     }
@@ -40,7 +39,7 @@
     const username = document.getElementById('username').value.trim();
     const message = document.getElementById('message').value.trim();
 
-    alert('Sending: ' + username + ' - ' + message); // debug
+    alert('Sending: ' + username + ' - ' + message); // Debug alert
 
     if (!username || !message) {
       alert('Please enter both name and message.');
