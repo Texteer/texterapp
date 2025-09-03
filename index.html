@@ -1,41 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Supabase Chat</title>
-  <style>
-    body { font-family: Arial, sans-serif; background:#f0f0f0; padding:20px; }
-    h2 { text-align: center; }
-    #messages { border:1px solid #ccc; height:300px; overflow-y:scroll; background:#fff; padding:10px; margin-bottom:10px; }
-    #username { width: 100%; padding: 10px; margin-bottom: 10px; }
-    #message { width: 80%; padding: 10px; }
-    #sendBtn { padding: 10px; }
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/supabase.min.js"></script>
-</head>
-<body>
-
-<h2>Supabase Real-Time Chat</h2>
-
-<input type="text" id="username" placeholder="Enter your name" />
-<div id="messages"></div>
-
-<input type="text" id="message" placeholder="Type your message" />
-<button id="sendBtn">Send</button>
-
 <script>
   // Initialize Supabase
-  const supabaseUrl = 'https://fhokwoazuhkwrkrweddd.supabase.co'; // replace with your API URL
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc'; // replace with your anon key
+  const supabaseUrl = 'https://fhokwoazuhkwrkrweddd.supabase.co'; // <-- replace with your URL
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc'; // <-- replace with your key
   const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
-  // Function to add a message to the DOM
-  function addMessage(data) {
-    const msgDiv = document.getElementById('messages');
-    const p = document.createElement('p');
-    p.textContent = data.username + ": " + data.message;
-    msgDiv.appendChild(p);
-    msgDiv.scrollTop = msgDiv.scrollHeight;
-  }
 
   // Load existing messages
   async function loadMessages() {
@@ -44,10 +11,20 @@
       .select('*')
       .order('created_at', { ascending: true });
     if (error) {
-      console.error(error);
+      console.error('Error loading messages:', error);
+      alert('Error loading messages: ' + error.message);
     } else {
       data.forEach(addMessage);
     }
+  }
+
+  // Function to display message
+  function addMessage(data) {
+    const msgDiv = document.getElementById('messages');
+    const p = document.createElement('p');
+    p.textContent = data.username + ": " + data.message;
+    msgDiv.appendChild(p);
+    msgDiv.scrollTop = msgDiv.scrollHeight;
   }
 
   // Subscribe to real-time updates
@@ -59,20 +36,32 @@
     .subscribe();
 
   // Send message
- document.getElementById('sendBtn').onclick = async () => {
-   const username = document.getElementById('username').value.trim();
-   const message = document.getElementById('message').value.trim();
-   if (!username || !message) return;
-   await supabase
-     .from('messages')
-     .insert({ username: username, message: message });
-   document.getElementById('message').value = '';
- };
+  document.getElementById('sendBtn').onclick = async () => {
+    const username = document.getElementById('username').value.trim();
+    const message = document.getElementById('message').value.trim();
 
- // Load existing messages on page load
- loadMessages();
+    alert('Sending: ' + username + ' - ' + message); // debug
+
+    if (!username || !message) {
+      alert('Please enter both name and message.');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .insert({ username: username, message: message });
+      if (error) {
+        alert('Error sending message: ' + error.message);
+      } else {
+        alert('Message sent!');
+        document.getElementById('message').value = '';
+      }
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
+  };
+
+  // Load existing messages on page load
+  loadMessages();
 </script>
-
-</body>
-</html>
-
