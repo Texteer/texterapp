@@ -2,14 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Supabase Chat with Login</title>
+<title>Supabase Chat with Admin Panel</title>
 <style>
-body { font-family: Arial; background:#f0f0f0; padding:20px;}
-#loginDiv, #chatDiv { border:1px solid #ccc; padding:20px; background:#fff; margin-bottom:20px;}
-#messages { border:1px solid #ccc; height:300px; overflow-y:auto; padding:10px; margin-bottom:10px;}
-input[type=text], input[type=password] { width: calc(100% - 20px); padding:10px; margin-bottom:10px; box-sizing:border-box;}
-button { padding:10px 20px; cursor:pointer; margin-right:5px;}
-#adminPanel { display:none; border:1px solid #ccc; padding:10px; background:#eee; margin-bottom:10px;}
+body { font-family: Arial; background:#f0f0f0; padding:20px; }
+#loginDiv, #chatDiv { border:1px solid #ccc; padding:20px; background:#fff; margin-bottom:20px; }
+#messages { border:1px solid #ccc; height:300px; overflow-y:auto; padding:10px; margin-bottom:10px; }
+input[type=text], input[type=password] { width: calc(100% - 20px); padding:10px; margin-bottom:10px; box-sizing:border-box; }
+button { padding:10px 20px; cursor:pointer; margin-right:5px; }
+#adminPanel { display:none; border:1px solid #ccc; padding:10px; background:#eee; margin-bottom:10px; }
+ul { list-style:none; padding-left:0; }
+ul li { margin-bottom:5px; }
 </style>
 </head>
 <body>
@@ -26,9 +28,12 @@ button { padding:10px 20px; cursor:pointer; margin-right:5px;}
 
   <div id="adminPanel">
     <h3>Admin Panel</h3>
-    <p>Placeholder buttons (actual account creation/deletion requires server-side setup)</p>
-    <button onclick="alert('Create User clicked')">Create User</button>
-    <button onclick="alert('Delete User clicked')">Delete User</button>
+    <input type="text" id="newUserEmail" placeholder="New user email"><br>
+    <input type="text" id="newUserPassword" placeholder="New user password"><br>
+    <select id="newUserRole"><option value="user">User</option><option value="admin">Admin</option></select>
+    <button id="createUserBtn">Create User</button>
+    <h4>Existing Users</h4>
+    <ul id="userList"></ul>
   </div>
 
   <div id="messages"></div>
@@ -39,11 +44,9 @@ button { padding:10px 20px; cursor:pointer; margin-right:5px;}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// --- Supabase setup ---
 const supabaseUrl = 'https://fhokwoazuhkwrkrweddd.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc';
 const client = supabase.createClient(supabaseUrl, supabaseKey);
-
 let currentUser = null;
 
 // --- Login ---
@@ -82,7 +85,6 @@ document.getElementById('sendBtn').onclick = async () => {
   else document.getElementById('message').value='';
 };
 
-// Load previous messages
 async function loadMessages(){
   const { data } = await client.from('messages').select('*').order('created_at',{ascending:true});
   messagesDiv.innerHTML='';
@@ -94,7 +96,6 @@ async function loadMessages(){
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-// Realtime
 function setupRealtime(){
   client.channel('room1').on('postgres_changes', {event:'INSERT', schema:'public', table:'messages'}, payload=>{
     const p = document.createElement('p');
@@ -104,14 +105,55 @@ function setupRealtime(){
   }).subscribe();
 }
 
-// Admin Panel (client-side only)
+// --- Admin Panel ---
 async function checkAdmin(){
   const { data } = await client.from('users').select('*').eq('id', currentUser.id).single();
   if(data && data.role==='admin'){
     document.getElementById('adminPanel').style.display='block';
+    loadUsers();
   }
 }
-</script>
 
+// Load users for admin
+async function loadUsers(){
+  const { data } = await client.from('users').select('*');
+  const list = document.getElementById('userList'); list.innerHTML='';
+  data.forEach(u=>{
+    const li=document.createElement('li');
+    li.textContent=u.username+' ('+u.role+') ';
+    const delBtn=document.createElement('button'); delBtn.textContent='Delete';
+    delBtn.onclick = () => deleteUser(u.id);
+    li.appendChild(delBtn);
+    list.appendChild(li);
+  });
+}
+
+// Create user (calls Edge Function)
+document.getElementById('createUserBtn').onclick = async () => {
+  const email = document.getElementById('newUserEmail').value.trim();
+  const password = document.getElementById('newUserPassword').value.trim();
+  const role = document.getElementById('newUserRole').value;
+  if (!email || !password) return alert('Email & password required');
+
+  const res = await fetch('https://supabase.com/dashboard/project/fhokwoazuhkwrkrweddd/functions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-secret': 'ADMIN_SECRET' },
+    body: JSON.stringify({ action:'create', email, password, role })
+  });
+  const data = await res.json();
+  if(data.error) alert(data.error); else { alert('User created'); loadUsers(); }
+}
+
+// Delete user (calls Edge Function)
+async function deleteUser(userId){
+  const res = await fetch('https://<project>.functions.supabase.co/manage-users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-secret': '<YOUR_ADMIN_SECRET>' },
+    body: JSON.stringify({ action:'delete', userId })
+  });
+  const data = await res.json();
+  if(data.error) alert(data.error); else { alert('User deleted'); loadUsers(); }
+}
+</script>
 </body>
 </html>
