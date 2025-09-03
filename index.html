@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Chat App</title>
+  <title>Supabase Chat App</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -29,21 +29,23 @@
 </head>
 <body>
 
-<h2>Chat</h2>
+<h2>Supabase Chat</h2>
 
-<input type="text" id="username" placeholder="Your name" />
+<input type="text" id="username" placeholder="Enter your name" />
 <div id="messages"></div>
-<input type="text" id="message" placeholder="Your message" />
+<input type="text" id="message" placeholder="Type your message" />
 <button id="sendBtn">Send</button>
 
 <!-- Load the Supabase library -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/supabase.min.js"></script>
 
-<!-- Your custom script -->
+<!-- Your custom script with your URL and key -->
 <script>
-  // Initialize Supabase after the library loads
-  const supabaseUrl = 'https://fhokwoazuhkwrkrweddd.supabase.co'; // e.g., 'https://xyzcompany.supabase.co'
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc'; // your anon key
+  // Your Supabase project info
+  const supabaseUrl = 'https://fhokwoazuhkwrkrweddd.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc';
+
+  // Initialize Supabase
   const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
   // Load existing messages
@@ -59,7 +61,7 @@
     }
   }
 
-  // Add message to display
+  // Function to add a message to the chat display
   function addMessage(data) {
     const msgDiv = document.getElementById('messages');
     const p = document.createElement('p');
@@ -68,7 +70,7 @@
     msgDiv.scrollTop = msgDiv.scrollHeight;
   }
 
-  // Subscribe to real-time updates
+  // Subscribe to real-time inserts
   supabase
     .from('messages')
     .on('INSERT', payload => {
@@ -76,8 +78,8 @@
     })
     .subscribe();
 
-  // Send message when button clicked
- document.getElementById('sendBtn').onclick = async () => {
+  // Send message handler
+  document.getElementById('sendBtn').onclick = async () => {
     const username = document.getElementById('username').value.trim();
     const message = document.getElementById('message').value.trim();
 
@@ -101,7 +103,7 @@
     }
   };
 
-  // Load messages on page load
+  // Load messages when page loads
   loadMessages();
 </script>
 
