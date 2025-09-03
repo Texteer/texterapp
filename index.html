@@ -36,16 +36,16 @@
 <input type="text" id="message" placeholder="Type your message" />
 <button id="sendBtn">Send</button>
 
-<!-- Load the Supabase library -->
+<!-- Load the Supabase library first -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/supabase.min.js"></script>
 
-<!-- Your custom script with your URL and key -->
+<!-- Your custom script that uses createClient -->
 <script>
   // Your Supabase project info
   const supabaseUrl = 'https://fhokwoazuhkwrkrweddd.supabase.co';
   const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc';
 
-  // Initialize Supabase
+  // Initialize supabase client
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   // Load existing messages
@@ -61,7 +61,7 @@
     }
   }
 
-  // Function to add a message to the chat display
+  // Function to add message to DOM
   function addMessage(data) {
     const msgDiv = document.getElementById('messages');
     const p = document.createElement('p');
@@ -70,7 +70,7 @@
     msgDiv.scrollTop = msgDiv.scrollHeight;
   }
 
-  // Subscribe to real-time inserts
+  // Subscribe to new messages
   supabase
     .from('messages')
     .on('INSERT', payload => {
@@ -103,10 +103,9 @@
     }
   };
 
-  // Load messages when page loads
+  // Load messages on page load
   loadMessages();
 </script>
 
 </body>
 </html>
-
