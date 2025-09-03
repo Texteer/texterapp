@@ -1,13 +1,52 @@
-<!-- Load the Supabase library -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Supabase Chat App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      padding: 20px;
+    }
+    #messages {
+      border: 1px solid #ccc;
+      height: 300px;
+      overflow-y: auto;
+      background: #fff;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    input[type="text"] {
+      width: calc(100% - 20px);
+      padding: 10px;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 10px 20px;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Supabase Chat</h2>
+
+<input type="text" id="username" placeholder="Enter your name" />
+<div id="messages"></div>
+<input type="text" id="message" placeholder="Type your message" />
+<button id="sendBtn">Send</button>
+
+<!-- Load Supabase library -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/supabase.min.js"></script>
 
-<!-- Your custom script (placed after the library) -->
+<!-- Your custom script -->
 <script>
-  // Initialize Supabase after the library loads
-  const supabaseurl = 'https://fhokwoazuhkwrkrweddd.supabase.co';
-  const supabasekey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc';
-  const supabase = supabase.createClient(supabaseurl, supabasekey);
+  // Initialize Supabase with your project details
+  const supabaseUrl = 'https://fhokwoazuhkwrkrweddd.supabase.co'; // e.g., 'https://xyzcompany.supabase.co'
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc'; // your anon key
+  const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
+  // Function to load existing messages
   async function loadMessages() {
     const { data, error } = await supabase
       .from('messages')
@@ -20,6 +59,7 @@
     }
   }
 
+  // Function to add message to display
   function addMessage(data) {
     const msgDiv = document.getElementById('messages');
     const p = document.createElement('p');
@@ -28,7 +68,7 @@
     msgDiv.scrollTop = msgDiv.scrollHeight;
   }
 
-  // Subscribe to real-time updates
+  // Subscribe to real-time inserts
   supabase
     .from('messages')
     .on('INSERT', payload => {
@@ -36,15 +76,13 @@
     })
     .subscribe();
 
-  // Send message
-  document.getElementById('sendBtn').onclick = async () => {
+  // Send message when button clicked
+ document.getElementById('sendBtn').onclick = async () => {
     const username = document.getElementById('username').value.trim();
     const message = document.getElementById('message').value.trim();
 
-    alert('Sending: ' + username + ' - ' + message); // Debug alert
-
     if (!username || !message) {
-      alert('Please enter both name and message.');
+      alert('Please enter your name and message.');
       return;
     }
 
@@ -63,6 +101,9 @@
     }
   };
 
-  // Load messages on page load
+  // Load existing messages on page load
   loadMessages();
 </script>
+
+</body>
+</html>
