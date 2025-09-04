@@ -79,15 +79,14 @@ document.getElementById('loginBtn').onclick = async () => {
 
   currentUser = data.user;
 
-  // lookup username
+  // lookup username by email
   const { data: userRow, error: userError } = await client
     .from('users')
     .select('username, role')
-    .eq('id', currentUser.id)
+    .eq('email', currentUser.email)
     .single();
 
   if (userError || !userRow || !userRow.username) {
-    // no username yet → prompt setup
     document.getElementById('loginDiv').style.display = 'none';
     document.getElementById('usernameSetupDiv').style.display = 'block';
     return;
@@ -95,7 +94,6 @@ document.getElementById('loginBtn').onclick = async () => {
 
   currentUsername = userRow.username;
   currentRole = userRow.role;
-
   enterChat();
 };
 
@@ -103,7 +101,6 @@ document.getElementById('loginBtn').onclick = async () => {
 document.getElementById('saveUsernameBtn').onclick = async () => {
   const newUsername = document.getElementById('newUsernameInput').value.trim();
 
-  // Validation
   if (!newUsername) {
     alert("Username cannot be empty");
     return;
@@ -119,7 +116,7 @@ document.getElementById('saveUsernameBtn').onclick = async () => {
 
   const { error } = await client
     .from('users')
-    .insert({ id: currentUser.id, username: newUsername, role: 'user' });
+    .insert({ email: currentUser.email, username: newUsername, role: 'user' });
 
   if (error) {
     alert("Error saving username: " + error.message);
@@ -128,7 +125,6 @@ document.getElementById('saveUsernameBtn').onclick = async () => {
 
   currentUsername = newUsername;
   currentRole = 'user';
-
   document.getElementById('usernameSetupDiv').style.display = 'none';
   enterChat();
 };
@@ -208,12 +204,11 @@ document.getElementById('createUserBtn').onclick = async () => {
     return;
   }
 
-  // Call your Edge Function
   const res = await fetch("https://fhokwoazuhkwrkrweddd.functions.supabase.co/manage-users", {
     method: "POST",
     headers: { 
       "Content-Type": "application/json", 
-      "x-admin-secret": "gh31qayobamA#" // must match your ADMIN_SECRET
+      "x-admin-secret": "gh31qayobamA#" 
     },
     body: JSON.stringify({ action: "create", email, password, username, role })
   });
