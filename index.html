@@ -1,34 +1,65 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Supabase Chat</title>
+  <title>Supabase Chat App</title>
   <style>
-    body { font-family: Arial, sans-serif; background:#f0f0f0; padding:20px; }
-    h2 { text-align: center; }
-    #messages { border:1px solid #ccc; height:300px; overflow-y:scroll; background:#fff; padding:10px; margin-bottom:10px; }
-    #username { width: 100%; padding: 10px; margin-bottom: 10px; }
-    #message { width: 80%; padding: 10px; }
-    #sendBtn { padding: 10px; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      padding: 20px;
+    }
+    #messages {
+      border: 1px solid #ccc;
+      height: 300px;
+      overflow-y: auto;
+      background: #fff;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    input[type="text"] {
+      width: calc(100% - 20px);
+      padding: 10px;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 10px 20px;
+    }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/supabase.min.js"></script>
 </head>
 <body>
 
-<h2>Supabase Real-Time Chat</h2>
+<h2>Supabase Chat</h2>
 
 <input type="text" id="username" placeholder="Enter your name" />
 <div id="messages"></div>
-
 <input type="text" id="message" placeholder="Type your message" />
 <button id="sendBtn">Send</button>
 
+<!-- Load Supabase library -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/supabase.min.js"></script>
+
+<!-- Your custom script -->
 <script>
-  // Initialize Supabase
-  const supabaseUrl = 'https://fhokwoazuhkwrkrweddd.supabase.co'; // replace with your API URL
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc'; // replace with your anon key
+  // Initialize Supabase with your project details
+  const supabaseUrl = 'https://fhokwoazuhkwrkrweddd.supabase.co'; // e.g., 'https://xyzcompany.supabase.co'
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc'; // your anon key
   const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-  // Function to add a message to the DOM
+  // Function to load existing messages
+  async function loadMessages() {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .order('created_at', { ascending: true });
+    if (error) {
+      console.error('Error loading messages:', error);
+    } else {
+      data.forEach(addMessage);
+    }
+  }
+
+  // Function to add message to display
   function addMessage(data) {
     const msgDiv = document.getElementById('messages');
     const p = document.createElement('p');
@@ -37,20 +68,7 @@
     msgDiv.scrollTop = msgDiv.scrollHeight;
   }
 
-  // Load existing messages
-  async function loadMessages() {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .order('created_at', { ascending: true });
-    if (error) {
-      console.error(error);
-    } else {
-      data.forEach(addMessage);
-    }
-  }
-
-  // Subscribe to real-time updates
+  // Subscribe to real-time inserts
   supabase
     .from('messages')
     .on('INSERT', payload => {
@@ -58,22 +76,34 @@
     })
     .subscribe();
 
-  // Send message
+  // Send message when button clicked
  document.getElementById('sendBtn').onclick = async () => {
-   const username = document.getElementById('username').value.trim();
-   const message = document.getElementById('message').value.trim();
-   if (!username || !message) return;
-   await supabase
-     .from('messages')
-     .insert({ username: username, message: message });
-   document.getElementById('message').value = '';
- };
+    const username = document.getElementById('username').value.trim();
+    const message = document.getElementById('message').value.trim();
 
- // Load existing messages on page load
- loadMessages();
+    if (!username || !message) {
+      alert('Please enter your name and message.');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .insert({ username: username, message: message });
+      if (error) {
+        alert('Error sending message: ' + error.message);
+      } else {
+        alert('Message sent!');
+        document.getElementById('message').value = '';
+      }
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
+  };
+
+  // Load existing messages on page load
+  loadMessages();
 </script>
 
 </body>
 </html>
-
-
