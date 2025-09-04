@@ -1,109 +1,184 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Supabase Chat App</title>
+  <meta charset="UTF-8">
+  <title>TexterApp</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f0f0f0;
-      padding: 20px;
-    }
-    #messages {
-      border: 1px solid #ccc;
-      height: 300px;
-      overflow-y: auto;
-      background: #fff;
-      padding: 10px;
-      margin-bottom: 10px;
-    }
-    input[type="text"] {
-      width: calc(100% - 20px);
-      padding: 10px;
-      margin-bottom: 10px;
-      box-sizing: border-box;
-    }
-    button {
-      padding: 10px 20px;
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #chatDiv, #adminDiv { display: none; }
+    .message { border-bottom: 1px solid #ccc; padding: 5px; }
+    .admin-panel { margin-top: 20px; border: 1px solid #000; padding: 10px; }
   </style>
 </head>
 <body>
+  <h1>📱 TexterApp</h1>
 
-<h2>Supabase Chat</h2>
+  <!-- Login -->
+  <div id="loginDiv">
+    <h2>Login</h2>
+    <input type="text" id="loginUsername" placeholder="Username"><br>
+    <input type="password" id="loginPassword" placeholder="Password"><br>
+    <button id="loginBtn">Login</button>
+  </div>
 
-<input type="text" id="username" placeholder="Enter your name" />
-<div id="messages"></div>
-<input type="text" id="message" placeholder="Type your message" />
-<button id="sendBtn">Send</button>
+  <!-- Chat -->
+  <div id="chatDiv">
+    <h2>Chat</h2>
+    <div id="messages"></div>
+    <input type="text" id="messageInput" placeholder="Type a message">
+    <button id="sendBtn">Send</button>
+    <button id="logoutBtn">Logout</button>
+  </div>
 
-<!-- Load Supabase library -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/supabase.min.js"></script>
+  <!-- Admin -->
+  <div id="adminDiv" class="admin-panel">
+    <h2>Admin Panel</h2>
+    <h3>Create User</h3>
+    <input type="text" id="newUsername" placeholder="New Username"><br>
+    <input type="password" id="newPassword" placeholder="Password"><br>
+    <select id="newRole">
+      <option value="user">User</option>
+      <option value="admin">Admin</option>
+    </select><br>
+    <button id="createUserBtn">Create User</button>
 
-<!-- Your custom script -->
-<script>
-  // Initialize Supabase with your project details
-  const supabaseUrl = 'https://fhokwoazuhkwrkrweddd.supabase.co'; // e.g., 'https://xyzcompany.supabase.co'
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc'; // your anon key
-  const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    <h3>Delete User</h3>
+    <input type="text" id="deleteUsername" placeholder="Username to Delete"><br>
+    <button id="deleteUserBtn">Delete User</button>
+  </div>
 
-  // Function to load existing messages
-  async function loadMessages() {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .order('created_at', { ascending: true });
-    if (error) {
-      console.error('Error loading messages:', error);
-    } else {
-      data.forEach(addMessage);
-    }
-  }
+  <script>
+    const SUPABASE_URL = "https://fhokwoazuhkwrkrweddd.supabase.co";  // replace with your project URL
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc";  // replace with anon/public key
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // Function to add message to display
-  function addMessage(data) {
-    const msgDiv = document.getElementById('messages');
-    const p = document.createElement('p');
-    p.textContent = data.username + ": " + data.message;
-    msgDiv.appendChild(p);
-    msgDiv.scrollTop = msgDiv.scrollHeight;
-  }
+    let currentUser = null;
 
-  // Subscribe to real-time inserts
-  supabase
-    .from('messages')
-    .on('INSERT', payload => {
-      addMessage(payload.new);
-    })
-    .subscribe();
+    // Login with username + password
+    document.getElementById('loginBtn').onclick = async () => {
+      const username = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+      if (!username || !password) return alert("Enter username & password");
 
-  // Send message when button clicked
- document.getElementById('sendBtn').onclick = async () => {
-    const username = document.getElementById('username').value.trim();
-    const message = document.getElementById('message').value.trim();
+      // Look up user
+      const { data: userRow, error: lookupError } = await client
+        .from('users')
+        .select('id, role')
+        .eq('username', username)
+        .single();
 
-    if (!username || !message) {
-      alert('Please enter your name and message.');
-      return;
-    }
+      if (lookupError || !userRow) return alert("Username not found");
 
-    try {
-      const { error } = await supabase
-        .from('messages')
-        .insert({ username: username, message: message });
-      if (error) {
-        alert('Error sending message: ' + error.message);
-      } else {
-        alert('Message sent!');
-        document.getElementById('message').value = '';
+      // Get email from auth by userId
+      const { data: authUser, error: authError } = await client.auth.admin.getUserById(userRow.id);
+      if (authError || !authUser.user) return alert("Could not find account");
+
+      const email = authUser.user.email;
+
+      // Sign in
+      const { data, error } = await client.auth.signInWithPassword({ email, password });
+      if (error) return alert("Login failed: " + error.message);
+
+      currentUser = { ...data.user, role: userRow.role, username };
+
+      document.getElementById('loginDiv').style.display = 'none';
+      document.getElementById('chatDiv').style.display = 'block';
+
+      if (currentUser.role === "admin") {
+        document.getElementById('adminDiv').style.display = 'block';
       }
-    } catch (err) {
-      alert('Error: ' + err.message);
+
+      loadMessages();
+      setupRealtime();
+    };
+
+    // Send message
+    document.getElementById('sendBtn').onclick = async () => {
+      const content = document.getElementById('messageInput').value.trim();
+      if (!content) return;
+
+      await client.from('messages').insert([{ content, username: currentUser.username }]);
+      document.getElementById('messageInput').value = '';
+    };
+
+    // Logout
+    document.getElementById('logoutBtn').onclick = async () => {
+      await client.auth.signOut();
+      currentUser = null;
+      document.getElementById('chatDiv').style.display = 'none';
+      document.getElementById('adminDiv').style.display = 'none';
+      document.getElementById('loginDiv').style.display = 'block';
+    };
+
+    // Load messages
+    async function loadMessages() {
+      const { data, error } = await client.from('messages').select().order('created_at', { ascending: true });
+      if (error) return console.error(error);
+      renderMessages(data);
     }
-  };
 
-  // Load existing messages on page load
-  loadMessages();
-</script>
+    function renderMessages(messages) {
+      const container = document.getElementById('messages');
+      container.innerHTML = '';
+      messages.forEach(m => {
+        const div = document.createElement('div');
+        div.className = 'message';
+        div.textContent = `${m.username}: ${m.content}`;
+        container.appendChild(div);
+      });
+    }
 
+    // Realtime
+    function setupRealtime() {
+      client.channel('room1')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+          const m = payload.new;
+          const div = document.createElement('div');
+          div.className = 'message';
+          div.textContent = `${m.username}: ${m.content}`;
+          document.getElementById('messages').appendChild(div);
+        })
+        .subscribe();
+    }
+
+    // Admin: Create user
+    document.getElementById('createUserBtn').onclick = async () => {
+      const username = document.getElementById('newUsername').value.trim();
+      const password = document.getElementById('newPassword').value.trim();
+      const role = document.getElementById('newRole').value;
+      if (!username || !password) return alert("Fill in all fields");
+
+      const fakeEmail = `${username}@app.local`;
+
+      // Create auth user
+      const { data: newAuthUser, error: authErr } = await client.auth.admin.createUser({
+        email: fakeEmail,
+        password,
+        email_confirm: true
+      });
+      if (authErr) return alert("Error creating user: " + authErr.message);
+
+      // Save username + role in users table
+      await client.from('users').insert([{ id: newAuthUser.user.id, username, role }]);
+      alert("User created!");
+    };
+
+    // Admin: Delete user
+    document.getElementById('deleteUserBtn').onclick = async () => {
+      const username = document.getElementById('deleteUsername').value.trim();
+      if (!username) return;
+
+      const { data: userRow, error } = await client.from('users').select('id').eq('username', username).single();
+      if (error || !userRow) return alert("User not found");
+
+      // Delete from auth
+      await client.auth.admin.deleteUser(userRow.id);
+      // Delete from users table
+      await client.from('users').delete().eq('username', username);
+
+      alert("User deleted!");
+    };
+  </script>
 </body>
 </html>
