@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Supabase Chat with Username Display</title>
+  <title>Supabase Chat with Usernames</title>
   <style>
     body { font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px; }
     #messages { border: 1px solid #ccc; height: 300px; overflow-y: auto; background: #fff; padding: 10px; margin-bottom: 10px; }
     input, button { padding: 10px; margin: 5px 0; }
-    #chatDiv, #adminDiv { display: none; }
+    #chatDiv, #adminDiv, #usernameSetupDiv { display: none; }
   </style>
 </head>
 <body>
@@ -20,6 +20,13 @@
   <input type="email" id="loginEmail" placeholder="Email"><br>
   <input type="password" id="loginPassword" placeholder="Password"><br>
   <button id="loginBtn">Login</button>
+</div>
+
+<!-- First-Time Username Setup -->
+<div id="usernameSetupDiv">
+  <h3>Create Your Username</h3>
+  <input type="text" id="newUsernameInput" placeholder="Choose a username (max 15 chars)">
+  <button id="saveUsernameBtn">Save Username</button>
 </div>
 
 <!-- Chat -->
@@ -53,6 +60,7 @@ const client = supabase.createClient(
 
 let currentUser = null;
 let currentUsername = null;
+let currentRole = null;
 
 // --- Login ---
 document.getElementById('loginBtn').onclick = async () => {
@@ -78,24 +86,65 @@ document.getElementById('loginBtn').onclick = async () => {
     .eq('id', currentUser.id)
     .single();
 
-  if (userError || !userRow) {
-    alert("No username found for this account");
+  if (userError || !userRow || !userRow.username) {
+    // no username yet → prompt setup
+    document.getElementById('loginDiv').style.display = 'none';
+    document.getElementById('usernameSetupDiv').style.display = 'block';
     return;
   }
 
   currentUsername = userRow.username;
+  currentRole = userRow.role;
 
-  document.getElementById('loginDiv').style.display = 'none';
+  enterChat();
+};
+
+// --- Save Username (First Time) ---
+document.getElementById('saveUsernameBtn').onclick = async () => {
+  const newUsername = document.getElementById('newUsernameInput').value.trim();
+
+  // Validation
+  if (!newUsername) {
+    alert("Username cannot be empty");
+    return;
+  }
+  if (newUsername.length > 15) {
+    alert("Username must be 15 characters or less");
+    return;
+  }
+  if (!/^[a-zA-Z0-9_]+$/.test(newUsername)) {
+    alert("Username can only contain letters, numbers, and underscores");
+    return;
+  }
+
+  const { error } = await client
+    .from('users')
+    .insert({ id: currentUser.id, username: newUsername, role: 'user' });
+
+  if (error) {
+    alert("Error saving username: " + error.message);
+    return;
+  }
+
+  currentUsername = newUsername;
+  currentRole = 'user';
+
+  document.getElementById('usernameSetupDiv').style.display = 'none';
+  enterChat();
+};
+
+// --- Enter Chat ---
+function enterChat() {
   document.getElementById('chatDiv').style.display = 'block';
   document.getElementById('displayUsername').innerText = currentUsername;
 
-  if (userRow.role === 'admin') {
+  if (currentRole === 'admin') {
     document.getElementById('adminDiv').style.display = 'block';
   }
 
   loadMessages();
   setupRealtime();
-};
+}
 
 // --- Load messages ---
 async function loadMessages() {
