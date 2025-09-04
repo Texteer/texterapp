@@ -1,200 +1,183 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Texter — Global & DMs</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8">
+  <title>Snapchat-Style Chat</title>
   <style>
-    :root{
-      --bg:#0b1020; --panel:#121a2b; --panel-2:#0f172a; --accent:#3b82f6; --text:#e5e7eb;
-      --muted:#8aa0c6; --border:#1f2a44; --me:#2563eb; --them:#1f2937;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;background:linear-gradient(140deg,#000,#0b1a33 45%,#000);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--text);height:100vh;display:flex;align-items:center;justify-content:center}
-    .app{width:100%;max-width:1100px;height:92vh;display:grid;gap:10px;grid-template-columns:280px 1fr;grid-template-rows:auto 1fr auto;grid-template-areas:"header header" "sidebar chat" "sidebar input";background:var(--bg);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.4)}
-    header{grid-area:header;background:var(--panel);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
-    .brand{font-weight:700;color:#60a5fa}
-    .sidebar{grid-area:sidebar;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column}
-    .friends{flex:1;overflow:auto}
-    .list-item{display:flex;gap:10px;align-items:center;padding:10px 12px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.03)}
-    .list-item:hover{background:#0e1730}
-    .avatar{width:34px;height:34px;border-radius:50%;background:#0e2a5a;display:grid;place-items:center;color:#cde1ff;font-weight:700;font-size:.9rem;border:1px solid #18325e}
-    .sidebar-buttons{display:flex;gap:8px;padding:10px;border-bottom:1px solid var(--border)}
-    .btn{padding:8px 10px;font-size:.8rem;border-radius:8px;border:1px solid var(--border);background:#0c1426;color:var(--text);cursor:pointer}
-    .btn.primary{background:var(--accent);border-color:transparent}
-    .badge{background:#ef4444;color:#fff;border-radius:50%;padding:2px 6px;font-size:.7rem;margin-left:4px}
-    .popup{position:absolute;top:60px;left:300px;width:300px;max-height:400px;background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:auto;z-index:20;box-shadow:0 8px 30px rgba(0,0,0,.4);display:none}
-    .popup-header{padding:10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-    .chat{grid-area:chat;display:flex;flex-direction:column;background:var(--panel-2)}
-    .chat-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
-    .chat-title{font-weight:600}
-    .messages{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
-    .bubble{max-width:72%;padding:10px 12px;border-radius:12px;line-height:1.3;word-wrap:break-word}
-    .bubble.me{align-self:flex-end;background:var(--me);color:#fff}
-    .bubble.them{align-self:flex-start;background:var(--them);color:#e6eefc}
-    .bubble .from{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:.82rem;color:#cdd8ff}
-    .composer{grid-area:input;display:flex;gap:10px;padding:12px;background:var(--panel);border-top:1px solid var(--border)}
-    .composer input{flex:1;padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:#0c1426;color:var(--text)}
-    .send-mobile{display:none}
-    @media (max-width:900px){.app{grid-template-columns:1fr;grid-template-areas:"header" "chat" "input";}.sidebar{display:none}.send-mobile{display:inline-flex}}
-    .auth-wrap{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px;box-shadow:0 10px 40px rgba(0,0,0,.35);margin:12px auto}
-    .auth-wrap input{background:#0c1426;border:1px solid var(--border);color:var(--text);padding:12px 14px;border-radius:10px;margin:6px 0}
-    .auth-wrap button{padding:12px 14px;border-radius:10px;background:var(--accent);border:none;color:#fff;cursor:pointer}
+    body { margin: 0; font-family: Arial, sans-serif; background: #0d1117; color: #fff; }
+    #app { display: flex; height: 100vh; }
+    #sidebar { width: 250px; background: #161b22; padding: 10px; overflow-y: auto; }
+    #chatArea { flex: 1; display: flex; flex-direction: column; background: #0d1117; }
+    #messages { flex: 1; overflow-y: auto; padding: 10px; }
+    #inputArea { display: flex; padding: 10px; border-top: 1px solid #333; }
+    #message { flex: 1; padding: 10px; border: none; border-radius: 5px; }
+    .msg { margin: 5px 0; padding: 8px 12px; border-radius: 15px; max-width: 60%; word-wrap: break-word; }
+    .msg.mine { background: #1e40af; align-self: flex-end; }
+    .msg.theirs { background: #2d3748; align-self: flex-start; }
+    .friend { padding: 10px; cursor: pointer; border-radius: 5px; }
+    .friend:hover { background: #2d3748; }
+    .hidden { display: none; }
+    .popup { position: absolute; top: 50px; left: 50%; transform: translateX(-50%); background: #161b22; border: 1px solid #333; padding: 20px; border-radius: 10px; }
+    .btn { background: #1e40af; color: #fff; padding: 6px 12px; border: none; border-radius: 5px; cursor: pointer; }
+    .btn:hover { background: #2563eb; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #161b22; border-bottom: 1px solid #333; }
+    .badge { background: red; color: #fff; border-radius: 50%; padding: 3px 7px; font-size: 12px; margin-left: 5px; }
   </style>
 </head>
 <body>
 
-<!-- Auth screen -->
-<div id="authScreen" style="display:none; width:100%; max-width:900px;">
-  <div class="auth-wrap">
-    <h2 style="color:#60a5fa;margin:0 0 8px">Welcome</h2>
-    <input id="loginEmail" type="email" placeholder="Email" />
-    <input id="loginPassword" type="password" placeholder="Password" />
-    <button id="loginBtn">Log In</button>
+<div id="loginDiv">
+  <h2>Login</h2>
+  <input type="email" id="email" placeholder="Email"><br>
+  <input type="password" id="password" placeholder="Password"><br>
+  <button id="loginBtn" class="btn">Login</button>
+</div>
+
+<div id="app" class="hidden">
+  <div id="sidebar">
+    <div class="topbar">
+      <span>Friends</span>
+      <div>
+        <button id="showRequestsBtn" class="btn">Requests <span id="reqBadge" class="badge hidden">0</span></button>
+        <button id="addFriendBtn" class="btn">+</button>
+      </div>
+    </div>
+    <div id="friendsList"></div>
+  </div>
+  <div id="chatArea">
+    <div class="topbar"><span id="chatTitle">Global Chat</span></div>
+    <div id="messages"></div>
+    <div id="inputArea">
+      <input type="text" id="message" placeholder="Type a message...">
+    </div>
   </div>
 </div>
 
-<!-- Username setup -->
-<div id="usernameScreen" style="display:none; width:100%; max-width:900px;">
-  <div class="auth-wrap">
-    <h2 style="color:#60a5fa;margin:0 0 8px">Create your username</h2>
-    <input id="usernameInput" type="text" placeholder="username" />
-    <button id="saveUsernameBtn">Save Username</button>
-  </div>
+<!-- Add Friend Popup -->
+<div id="addFriendPopup" class="popup hidden">
+  <h3>Add Friend</h3>
+  <input type="text" id="friendEmail" placeholder="Friend's email"><br>
+  <button id="sendFriendReq" class="btn">Send Request</button>
+  <button id="closeAddFriend" class="btn">X</button>
 </div>
 
-<!-- App -->
-<div id="app" class="app" style="display:none;">
-  <header>
-    <div class="brand">Texter</div>
-    <div id="meInfo"></div>
-  </header>
-
-  <aside class="sidebar">
-    <div class="sidebar-buttons">
-      <button id="toggleAddBtn" class="btn">➕ Add</button>
-      <button id="toggleReqBtn" class="btn">🔔 Requests <span id="reqCount" class="badge" style="display:none">0</span></button>
-    </div>
-    <div class="friends" id="friends"></div>
-  </aside>
-
-  <!-- Popups -->
-  <div id="addPopup" class="popup">
-    <div class="popup-header"><span>Add Friend</span><button onclick="closePopup('addPopup')" class="btn">X</button></div>
-    <div style="padding:10px"><input id="searchBox" type="text" placeholder="Search username…" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border);background:#0c1426;color:var(--text)" /></div>
-    <div id="searchResults"></div>
-  </div>
-  <div id="reqPopup" class="popup">
-    <div class="popup-header"><span>Friend Requests</span><button onclick="closePopup('reqPopup')" class="btn">X</button></div>
-    <div id="requests"></div>
-  </div>
-
-  <section class="chat">
-    <div class="chat-header">
-      <div class="avatar" id="roomAvatar">GC</div>
-      <div class="chat-title" id="roomTitle">Global Chat</div>
-    </div>
-    <div class="messages" id="messages"></div>
-  </section>
-
-  <div class="composer">
-    <input id="composerInput" type="text" placeholder="Type a message…" />
-    <button id="sendBtn" class="btn primary send-mobile">Send</button>
-  </div>
+<!-- Requests Popup -->
+<div id="requestsPopup" class="popup hidden">
+  <h3>Friend Requests</h3>
+  <div id="requestsList"></div>
+  <button id="closeRequests" class="btn">X</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const client = supabase.createClient("https://fhokwoazuhkwrkrweddd.supabase.co","YOUR_KEY");
+  const client = supabase.createClient(
+    "https://fhokwoazuhkwrkrweddd.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc"
+  );
 
-const $ = id=>document.getElementById(id);
-const initials = n=>(n||"?")[0].toUpperCase();
+  let currentUser = null;
+  let currentChat = { type: "global", id: null };
 
-let me={email:null,username:null}, currentView={type:"global"}, dmChannel=null;
-
-// popups
-function togglePopup(id){
-  const p=$(id);
-  p.style.display=p.style.display==="block"?"none":"block";
-}
-function closePopup(id){$(id).style.display="none";}
-
-// UI
-$("toggleAddBtn").onclick=()=>togglePopup("addPopup");
-$("toggleReqBtn").onclick=()=>togglePopup("reqPopup");
-
-// login (shortened)
-$("loginBtn").onclick=async()=>{
-  const {data,error}=await client.auth.signInWithPassword({email:$("loginEmail").value,password:$("loginPassword").value});
-  if(error) return alert(error.message);
-  me.email=data.user.email;
-  afterLogin();
-};
-
-// after login (short)
-async function afterLogin(){
-  $("authScreen").style.display="none";
-  $("app").style.display="grid";
-  $("meInfo").textContent=me.email;
-  loadFriends(); loadRequests();
-  loadGlobal(); subscribeGlobal(); wireComposer();
-}
-
-// send messages
-function wireComposer(){
-  $("composerInput").addEventListener("keydown",async e=>{
-    if(e.key==="Enter"){e.preventDefault();sendMessage();}
-  });
-  $("sendBtn").onclick=sendMessage;
-}
-async function sendMessage(){
-  const txt=$("composerInput").value.trim(); if(!txt) return;
-  if(currentView.type==="global"){
-    await client.from("messages").insert({sender_email:me.email,username:me.username,message:txt});
-  } else {
-    await client.from("dm_messages").insert({sender_email:me.email,receiver_email:currentView.peerEmail,content:txt});
+  async function init() {
+    const { data } = await client.auth.getSession();
+    if (data.session) {
+      currentUser = data.session.user;
+      document.getElementById("loginDiv").classList.add("hidden");
+      document.getElementById("app").classList.remove("hidden");
+      loadFriends();
+      subscribeToMessages();
+      loadMessages();
+    }
   }
-  $("composerInput").value="";
-}
 
-// global load+sub
-async function loadGlobal(){
-  const {data}=await client.from("messages").select("*").order("created_at");
-  $("messages").innerHTML="";
-  data.forEach(m=>appendBubble(m.username,m.sender_email===me.email,m.message));
-}
-function subscribeGlobal(){
-  client.channel("global")
-    .on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},payload=>{
-      if(currentView.type==="global"){
-        appendBubble(payload.new.username,payload.new.sender_email===me.email,payload.new.message);
-      }
-    }).subscribe();
-}
+  document.getElementById("loginBtn").onclick = async () => {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const { data, error } = await client.auth.signInWithPassword({ email, password });
+    if (error) { alert(error.message); return; }
+    currentUser = data.user;
+    document.getElementById("loginDiv").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+    loadFriends();
+    subscribeToMessages();
+    loadMessages();
+  };
 
-// DM subscription fixed
-function subscribeDM(peerEmail,peerName){
-  if(dmChannel) client.removeChannel(dmChannel);
-  dmChannel=client.channel(`dm-${me.email}-${peerEmail}`)
-    .on("postgres_changes",{event:"INSERT",schema:"public",table:"dm_messages"},p=>{
-      if((p.new.sender_email===me.email&&p.new.receiver_email===peerEmail)||(p.new.sender_email===peerEmail&&p.new.receiver_email===me.email)){
-        if(currentView.peerEmail===peerEmail) appendBubble(p.new.sender_email===me.email?me.username:peerName,p.new.sender_email===me.email,p.new.content);
-      }
-    }).subscribe();
-}
+  async function loadMessages() {
+    document.getElementById("messages").innerHTML = "";
+    let query = client.from("messages").select("*").order("created_at", { ascending: true });
+    if (currentChat.type === "dm") query = query.eq("chat_id", currentChat.id);
+    const { data } = await query;
+    data.forEach(renderMessage);
+  }
 
-// render bubbles
-function appendBubble(from,mine,text){
-  const d=document.createElement("div");
-  d.className=`bubble ${mine?"me":"them"}`;
-  d.innerHTML=`<div class="from"><div class="avatar" style="width:24px;height:24px">${initials(from)}</div>${from}</div>${text}`;
-  $("messages").appendChild(d);
-  $("messages").scrollTop=$("messages").scrollHeight;
-}
+  function renderMessage(msg) {
+    const div = document.createElement("div");
+    div.classList.add("msg");
+    div.classList.add(msg.sender_id === currentUser.id ? "mine" : "theirs");
+    div.textContent = msg.content;
+    document.getElementById("messages").appendChild(div);
+    document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
+  }
 
-// friends + requests (shortened, still works)
-async function loadFriends(){/* your query */ }
-async function loadRequests(){/* update reqCount badge */ }
+  function subscribeToMessages() {
+    client.channel("public:messages")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, payload => {
+        if (currentChat.type === "global" && !payload.new.chat_id) renderMessage(payload.new);
+        if (currentChat.type === "dm" && payload.new.chat_id === currentChat.id) renderMessage(payload.new);
+      })
+      .subscribe();
+  }
+
+  document.getElementById("message").addEventListener("keydown", async (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const content = e.target.value.trim();
+      if (!content) return;
+      const { error } = await client.from("messages").insert({
+        sender_id: currentUser.id,
+        content,
+        chat_id: currentChat.type === "dm" ? currentChat.id : null
+      });
+      if (!error) e.target.value = "";
+    }
+  });
+
+  async function loadFriends() {
+    document.getElementById("friendsList").innerHTML = "";
+    const { data } = await client.from("friends").select("*").or(`user1.eq.${currentUser.id},user2.eq.${currentUser.id}`);
+    data.forEach(f => {
+      const div = document.createElement("div");
+      div.classList.add("friend");
+      const friendId = f.user1 === currentUser.id ? f.user2 : f.user1;
+      div.textContent = "Friend: " + friendId;
+      div.onclick = () => {
+        currentChat = { type: "dm", id: f.chat_id };
+        document.getElementById("chatTitle").textContent = "Private Chat";
+        loadMessages();
+      };
+      document.getElementById("friendsList").appendChild(div);
+    });
+  }
+
+  // Add friend popup toggle
+  document.getElementById("addFriendBtn").onclick = () => {
+    document.getElementById("addFriendPopup").classList.toggle("hidden");
+  };
+  document.getElementById("closeAddFriend").onclick = () => {
+    document.getElementById("addFriendPopup").classList.add("hidden");
+  };
+
+  // Requests popup toggle
+  document.getElementById("showRequestsBtn").onclick = () => {
+    document.getElementById("requestsPopup").classList.toggle("hidden");
+  };
+  document.getElementById("closeRequests").onclick = () => {
+    document.getElementById("requestsPopup").classList.add("hidden");
+  };
+
+  init();
 </script>
+
 </body>
 </html>
