@@ -6,7 +6,8 @@
 <title>Global Chat</title>
 <style>
 body { margin:0; font-family:'Segoe UI',sans-serif; background:#0a0f1a; color:#fff; display:flex; height:100vh; }
-header { background:#0f1524; padding:1rem; text-align:center; font-size:1.5rem; font-weight:bold; position:fixed; top:0; left:0; width:100%; z-index:5; }
+header { background:#0f1524; padding:1rem; text-align:center; font-size:1.5rem; font-weight:bold; position:fixed; top:0; left:0; width:100%; z-index:5; display:flex; justify-content:space-between; align-items:center; }
+#toggleSidebar { background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; display:none; }
 #chatContainer { flex:1; display:flex; flex-direction:column; margin-top:60px; }
 #messages { flex:1; padding:1rem; overflow-y:auto; display:flex; flex-direction:column; gap:0.3rem; }
 .message { padding:0.6rem 1rem; border-radius:15px; max-width:65%; word-break:break-word; display:flex; align-items:center; }
@@ -21,15 +22,25 @@ header { background:#0f1524; padding:1rem; text-align:center; font-size:1.5rem; 
 #authBox input { margin-bottom:1rem; padding:0.6rem; border-radius:8px; border:none; background:#141a2c; color:#fff; }
 #authBox button { padding:0.6rem; border:none; border-radius:8px; background:#0b78e3; color:#fff; font-weight:bold; cursor:pointer; }
 #typingIndicator { font-size:0.85rem; color:#7a7a7a; padding-left:1rem; margin-bottom:0.2rem; height:18px; }
-#sidebar { width:220px; background:#0f1524; padding:1rem; border-left:1px solid #1c2335; display:flex; flex-direction:column; }
+#sidebar { width:220px; background:#0f1524; padding:1rem; border-left:1px solid #1c2335; display:flex; flex-direction:column; transition:transform 0.3s ease; }
 #sidebar h3 { margin:0 0 1rem 0; font-size:1.1rem; border-bottom:1px solid #1c2335; padding-bottom:0.5rem; }
 #userList { display:flex; flex-direction:column; gap:0.5rem; }
 .userItem { display:flex; align-items:center; gap:0.5rem; }
+
+/* Mobile collapsible sidebar */
+@media (max-width: 768px) {
+  #sidebar { position:fixed; top:60px; right:0; height:100%; transform:translateX(100%); z-index:9; }
+  #sidebar.active { transform:translateX(0); }
+  #toggleSidebar { display:block; }
+}
 </style>
 </head>
 <body>
 
-<header>Global Chat</header>
+<header>
+  Global Chat
+  <button id="toggleSidebar">☰</button>
+</header>
 
 <div id="chatContainer">
   <div id="typingIndicator"></div>
@@ -57,7 +68,7 @@ header { background:#0f1524; padding:1rem; text-align:center; font-size:1.5rem; 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const supabaseUrl = 'https://azpgwbxillscpwrraprl.supabase.co';
-  const supabaseKey = 'YOUR_ANON_KEY'; // put your anon key here
+  const supabaseKey = 'YOUR_ANON_KEY'; // Replace with your anon key
   const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
   let currentUser = null;
@@ -67,17 +78,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const codeInput = document.getElementById('codeInput');
   const loginBtn = document.getElementById('loginBtn');
   const authModal = document.getElementById('authModal');
-  const typingIndicator = document.getElementById('typingIndicator');
-  const userListEl = document.getElementById('userList');
+  const toggleSidebar = document.getElementById('toggleSidebar');
+  const sidebar = document.getElementById('sidebar');
 
-  let typingUsers = new Set();
-  let typingTimeout;
+  // Sidebar toggle
+  toggleSidebar.onclick = () => {
+    sidebar.classList.toggle('active');
+  };
 
-  // ------------------- HELPERS -------------------
+  // Helpers
   function getInitials(name) {
     return name.split(' ').map(n => n[0].toUpperCase()).join('').slice(0,2);
   }
-
   function stringToColor(str) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -85,94 +97,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     return `hsl(${hash % 360}, 70%, 50%)`;
   }
-
   function createProfileCircle(username) {
     const span = document.createElement('span');
     span.style.cssText = `
-      display:inline-flex;
-      justify-content:center;
-      align-items:center;
-      width:30px;
-      height:30px;
-      border-radius:50%;
-      background:${stringToColor(username)};
-      color:#fff;
-      font-weight:bold;
-      font-size:0.8rem;
+      display:inline-flex; justify-content:center; align-items:center;
+      width:30px; height:30px; border-radius:50%;
+      background:${stringToColor(username)}; color:#fff; font-weight:bold; font-size:0.8rem;
     `;
     span.textContent = getInitials(username);
     return span;
   }
 
-  function appendMessage(message, type) {
-    const div = document.createElement('div');
-    div.className = 'message ' + type;
-    const profileCircle = createProfileCircle(message.username);
-    div.appendChild(profileCircle);
-    const content = document.createElement('span');
-    content.innerHTML = `<strong>${message.username}</strong>: ${message.message} <span class="timestamp">${new Date(message.created_at).toLocaleTimeString()}</span>`;
-    div.appendChild(content);
-    messagesEl.appendChild(div);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-  }
+  // Login
+  async function loginWithCode(code) {
+    const parsedCode = isNaN(code) ? code : parseInt(code); // support both text and int
+    const { data, error } = await supabaseClient
+      .from('chat_codes')
+      .select('username')
+      .eq('code', parsedCode)
+      .single();
 
-  function updateTypingIndicator() {
-    if (typingUsers.size === 0) {
-      typingIndicator.textContent = '';
+    if (error || !data) {
+      alert('Invalid code');
       return;
     }
-    const names = Array.from(typingUsers);
-    typingIndicator.textContent = names.length === 1
-      ? `${names[0]} is typing...`
-      : `${names.join(' and ')} are typing...`;
-  }
 
-  function renderUserList(users) {
-    userListEl.innerHTML = '';
-    users.forEach(u => {
-      const div = document.createElement('div');
-      div.className = 'userItem';
-      div.appendChild(createProfileCircle(u.username));
-      const name = document.createElement('span');
-      name.textContent = u.username;
-      div.appendChild(name);
-      userListEl.appendChild(div);
-    });
-  }
-
-  // ------------------- LOGIN -------------------
-  async function loginWithCode(code) {
-    try {
-      const { data, error } = await supabaseClient
-        .from('chat_codes')
-        .select('username')
-        .eq('code', code)
-        .single();
-
-      if (error || !data) {
-        alert('Invalid code');
-        return false;
-      }
-
-      currentUser = { username: data.username, code };
-      localStorage.setItem('chatCode', code);
-      authModal.style.display = 'none';
-
-      await markOnline();
-      setInterval(markOnline, 30000);
-
-      await loadMessages();
-      subscribeMessages();
-      subscribeTyping();
-      loadOnlineUsers();
-      subscribeOnlineUsers();
-
-      return true;
-    } catch (err) {
-      console.error(err);
-      alert('Login failed');
-      return false;
-    }
+    currentUser = { username: data.username, code: parsedCode };
+    localStorage.setItem('chatCode', parsedCode);
+    authModal.style.display = 'none';
   }
 
   loginBtn.onclick = () => {
@@ -183,118 +135,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const savedCode = localStorage.getItem('chatCode');
   if (savedCode) loginWithCode(savedCode);
-
-  // ------------------- MESSAGES -------------------
-  async function sendMessage() {
-    const msg = messageInput.value.trim();
-    if (!msg || !currentUser) return;
-    const newMessage = {
-      username: currentUser.username,
-      message: msg,
-      created_at: new Date().toISOString()
-    };
-    appendMessage(newMessage, 'self');
-    messageInput.value = '';
-    await supabaseClient.from('global_messages').insert([newMessage]);
-
-    await supabaseClient.from('typing_status').upsert({
-      username: currentUser.username,
-      typing: false,
-      updated_at: new Date().toISOString()
-    });
-  }
-
-  sendBtn.onclick = sendMessage;
-  messageInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendMessage();
-  });
-
-  messageInput.addEventListener('input', async () => {
-    if (!currentUser) return;
-    await supabaseClient.from('typing_status').upsert({
-      username: currentUser.username,
-      typing: true,
-      updated_at: new Date().toISOString()
-    });
-    clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(async () => {
-      await supabaseClient.from('typing_status').upsert({
-        username: currentUser.username,
-        typing: false,
-        updated_at: new Date().toISOString()
-      });
-    }, 2000);
-  });
-
-  async function loadMessages() {
-    const { data, error } = await supabaseClient
-      .from('global_messages')
-      .select('*')
-      .order('created_at', { ascending: true });
-    if (error) return console.error(error);
-    messagesEl.innerHTML = '';
-    data.forEach(m => {
-      const type = (m.username === currentUser.username) ? 'self' : 'other';
-      appendMessage(m, type);
-    });
-  }
-
-  function subscribeMessages() {
-    if (window.messageChannel) window.messageChannel.unsubscribe();
-    window.messageChannel = supabaseClient
-      .channel('public:global_messages')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'global_messages' }, payload => {
-        const m = payload.new;
-        if (!currentUser || m.username === currentUser.username) return;
-        appendMessage(m, 'other');
-      })
-      .subscribe();
-  }
-
-  // ------------------- TYPING -------------------
-  function subscribeTyping() {
-    if (window.typingChannel) window.typingChannel.unsubscribe();
-    window.typingChannel = supabaseClient
-      .channel('public:typing_status')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'typing_status' }, payload => {
-        const { username, typing } = payload.new;
-        if (!currentUser || username === currentUser.username) return;
-        if (typing) typingUsers.add(username);
-        else typingUsers.delete(username);
-        updateTypingIndicator();
-      })
-      .subscribe();
-  }
-
-  // ------------------- ONLINE USERS -------------------
-  async function markOnline() {
-    if (!currentUser) return;
-    await supabaseClient.from('online_users').upsert({
-      username: currentUser.username,
-      last_seen: new Date().toISOString()
-    });
-  }
-
-  async function loadOnlineUsers() {
-    const { data, error } = await supabaseClient
-      .from('online_users')
-      .select('*')
-      .order('username', { ascending: true });
-    if (error) return console.error(error);
-    const now = Date.now();
-    const online = data.filter(u => (now - new Date(u.last_seen).getTime()) < 60000);
-    renderUserList(online);
-  }
-
-  function subscribeOnlineUsers() {
-    if (window.onlineChannel) window.onlineChannel.unsubscribe();
-    window.onlineChannel = supabaseClient
-      .channel('public:online_users')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'online_users' }, () => {
-        loadOnlineUsers();
-      })
-      .subscribe();
-  }
 });
 </script>
 </body>
