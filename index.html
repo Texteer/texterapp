@@ -1,332 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Supabase Chat</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dark Chat App</title>
 <style>
-  /* Your CSS styles (unchanged from your original code) */
-  body {
-    font-family: Arial, sans-serif;
-    background: #0d1117;
-    color: #f0f6fc;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-  }
-  #app {
-    width: 90%;
-    max-width: 600px;
-    background: #161b22;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-  }
-  h2 {
-    text-align: center;
-    color: #58a6ff;
-  }
-  input, button {
-    width: 100%;
-    padding: 10px;
-    margin: 5px 0;
-    border-radius: 5px;
-    border: none;
-    box-sizing: border-box;
-  }
-  input {
-    background: #0d1117;
-    color: #f0f6fc;
-    border: 1px solid #30363d;
-  }
-  button {
-    background: #238636;
-    color: white;
-    cursor: pointer;
-  }
-  button:hover {
-    background: #2ea043;
-  }
-  #messages {
-    border: 1px solid #30363d;
-    height: 300px;
-    overflow-y: auto;
-    background: #0d1117;
-    padding: 10px;
-    margin: 10px 0;
-    border-radius: 5px;
-  }
+body { margin:0; font-family:sans-serif; background:#0b0f1a; color:#fff; }
+header { background:#101426; padding:1rem; display:flex; justify-content:space-between; align-items:center; }
+button { cursor:pointer; border:none; border-radius:4px; padding:0.5rem 1rem; }
+main { display:flex; height:90vh; }
+#friends { width:250px; background:#141a2c; padding:1rem; overflow-y:auto; }
+#chat { flex:1; display:flex; flex-direction:column; background:#0d1326; }
+#messages { flex:1; padding:1rem; overflow-y:auto; }
+#input { display:flex; padding:0.5rem; background:#101426; }
+#input input { flex:1; padding:0.5rem; border:none; border-radius:4px 0 0 4px; }
+#input button { background:#0b78e3; color:#fff; border-radius:0 4px 4px 0; }
+.message { margin-bottom:0.5rem; }
+.message.self { text-align:right; color:#0b78e3; }
+.friend { padding:0.5rem; border-bottom:1px solid #1c2335; cursor:pointer; }
+.friend:hover { background:#1c2335; }
+#typingIndicator { font-size:0.9rem; color:#7a7a7a; margin-bottom:0.5rem; }
 </style>
 </head>
 <body>
-<div id="app">
-<h2>Supabase Chat</h2>
 
-<!-- Login Page -->
-<div id="login">
-  <h3>Login</h3>
-  <input type="email" id="loginEmail" placeholder="Email" />
-  <input type="password" id="loginPassword" placeholder="Password" />
-  <button id="loginBtn">Login</button>
-</div>
+<header>
+  <div>Dark Chat</div>
+  <div id="auth-buttons">
+    <button id="signup-btn">Sign Up</button>
+    <button id="login-btn">Login</button>
+    <button id="logout-btn" style="display:none;">Logout</button>
+  </div>
+</header>
 
-<!-- Username Setup -->
-<div id="set-username" style="display:none;">
-  <h3>Create Your Username</h3>
-  <input type="text" id="newUsername" placeholder="Choose a username (max 15 chars, no symbols)" />
-  <button id="saveUsernameBtn">Save Username</button>
-</div>
-
-<!-- Main App -->
-<div id="main-app" style="display:none;">
-  <header>
-    <div class="brand">Texter</div>
-    <div class="me" id="meInfo">Signed in as —</div>
-  </header>
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <div class="section-title">Find friends</div>
-    <div class="search">
-      <input id="searchBox" type="text" placeholder="Search username…" />
+<main>
+  <div id="friends"></div>
+  <div id="chat">
+    <div id="typingIndicator"></div>
+    <div id="messages"></div>
+    <div id="input">
+      <input type="text" id="messageInput" placeholder="Type a message...">
+      <button id="sendBtn">Send</button>
     </div>
-    <div class="results" id="searchResults"></div>
+  </div>
+</main>
 
-    <div class="section-title">Requests</div>
-    <div class="results" id="requests"></div>
-
-    <div class="section-title">Friends</div>
-    <div class="friends" id="friends"></div>
-  </aside>
-
-  <!-- Chat section -->
-  <section class="chat">
-    <div class="chat-header">
-      <div class="avatar" id="roomAvatar">GC</div>
-      <div class="chat-title" id="roomTitle">Global Chat</div>
-    </div>
-    <div class="messages" id="messages"></div>
-    <div class="composer">
-      <input id="composerInput" type="text" placeholder="Type a message… (Enter to send)" />
-      <button id="sendBtn" class="btn primary send-mobile">Send</button>
-    </div>
-  </section>
-</div>
-</div>
-
-<!-- Include Supabase JS SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // Initialize Supabase client FIRST
-  const supabaseUrl = "https://fhokwoazuhkwrkrweddd.supabase.co";
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc";
-  const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+const supabaseUrl = 'https://azpgwbxillscpwrraprl.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6cGd3YnhpbGxzY3B3cnJhcHJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg1MjQsImV4cCI6MjA3MjYzNDUyNH0.h7ZDxtH4pB3K5IzRB9goLJ1ldrY6EGf7CWT-ELGQ0i0';
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-  // State variables
-  let currentUser = null;
-  let currentUsername = null;
+let currentUser = null;
+let activeChat = null;
+let chatType = 'public'; // 'public' or 'private'
 
-  // Utility functions
-  const $ = (id) => document.getElementById(id);
-  const showSection = (id) => {
-    document.querySelectorAll('#login, #set-username, #main-app').forEach(el => el.style.display = 'none');
-    $(id).style.display = 'block';
-  };
-  const initials = (name='?') => {
-    const parts = name.trim().split(/[\s_]+/);
-    const a = (parts[0]||'')[0]||'?';
-    const b = (parts[1]||'')[0]||'';
-    return (a + b).toUpperCase();
-  };
+// ----------------- AUTH -----------------
+async function signUp() {
+  const email = prompt("Email?");
+  const password = prompt("Password?");
+  const username = prompt("Username?");
+  const { data, error } = await supabase.auth.signUp({ email, password });
+  if (error) return alert(error.message);
+  await supabase.from('users').insert([{ id: data.user.id, username }]);
+  alert("Signed up! Please login.");
+}
 
-  // Immediately check session on load
-  (async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session && session.user) {
-      await afterLogin(session.user);
-    } else {
-      showSection('login');
-    }
-  })();
+async function login() {
+  const email = prompt("Email?");
+  const password = prompt("Password?");
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) return alert(error.message);
+  currentUser = data.user;
+  document.getElementById('auth-buttons').style.display = 'none';
+  document.getElementById('logout-btn').style.display = 'inline';
+  loadFriends();
+  loadMessages();
+  subscribeMessages();
+  subscribeTyping();
+}
 
-  // Setup auth state change listener
-  supabase.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_OUT') {
-      currentUser = null;
-      currentUsername = null;
-      showSection('login');
-    } else if (session && session.user) {
-      await afterLogin(session.user);
-    }
+async function logout() {
+  await supabase.auth.signOut();
+  location.reload();
+}
+
+document.getElementById('signup-btn').onclick = signUp;
+document.getElementById('login-btn').onclick = login;
+document.getElementById('logout-btn').onclick = logout;
+
+// ----------------- FRIENDS -----------------
+async function loadFriends() {
+  const { data: friendsData } = await supabase.from('friends').select('user_id, friend_id, status, users!inner(username)').or(`user_id.eq.${currentUser.id},friend_id.eq.${currentUser.id}`);
+  const friendsDiv = document.getElementById('friends');
+  friendsDiv.innerHTML = '';
+  friendsData.forEach(f => {
+    const friendId = f.user_id === currentUser.id ? f.friend_id : f.user_id;
+    const div = document.createElement('div');
+    div.textContent = f.users.username;
+    div.className = 'friend';
+    div.onclick = () => openChat(friendId);
+    friendsDiv.appendChild(div);
   });
+}
 
-  // Login button handler
-  document.getElementById('loginBtn').onclick = async () => {
-    const email = $('#loginEmail').value.trim();
-    const password = $('#loginPassword').value.trim();
-    if (!email || !password) {
-      alert('Please enter email and password.');
-      return;
-    }
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      alert('Login failed: ' + error.message);
-    } else {
-      await afterLogin(data.user);
-    }
-  };
-
-  // After login / session restore
-  async function afterLogin(user) {
-    currentUser = user;
-    // Check if user record exists in 'users' table
-    const { data: userRecord, error } = await supabase
-      .from('users')
-      .select('username')
-      .eq('email', user.email)
-      .maybeSingle();
-
-    if (error) {
-      console.error('Error fetching user:', error);
-    }
-
-    if (userRecord && userRecord.username) {
-      currentUsername = userRecord.username;
-      initApp();
-    } else {
-      showSection('set-username');
-    }
+// ----------------- MESSAGES -----------------
+async function loadMessages() {
+  if(chatType === 'public') {
+    const { data: msgs } = await supabase.from('public_messages').select('*').order('created_at', { ascending:true });
+    document.getElementById('messages').innerHTML = '';
+    msgs.forEach(displayMessage);
+  } else if(activeChat) {
+    const { data: msgs } = await supabase.from('messages').select('*').or(`(sender_id.eq.${currentUser.id},receiver_id.eq.${activeChat}),(sender_id.eq.${activeChat},receiver_id.eq.${currentUser.id})`).order('created_at', { ascending:true });
+    document.getElementById('messages').innerHTML = '';
+    msgs.forEach(displayMessage);
   }
+}
 
-  // Save username handler
-  document.getElementById('saveUsernameBtn').onclick = async () => {
-    const usernameInput = $('#newUsername').value.trim();
-    if (!/^[a-zA-Z0-9_]{1,15}$/.test(usernameInput)) {
-      alert('Use letters/numbers/underscore only, max 15.');
-      return;
-    }
-    // Check for duplicate username
-    const { data: exists } = await supabase
-      .from('users')
-      .select('username')
-      .eq('username', usernameInput)
-      .maybeSingle();
-    if (exists) {
-      alert('That username is taken.');
-      return;
-    }
-    // Insert or update user record
-    const { error } = await supabase
-      .from('users')
-      .upsert({ email: currentUser.email, username: usernameInput }, { onConflict: 'email' });
-    if (error) {
-      alert('Error saving username: ' + error.message);
-      return;
-    }
-    currentUsername = usernameInput;
-    initApp();
-  };
+function displayMessage(msg) {
+  const div = document.createElement('div');
+  div.className = 'message ' + (msg.sender_id === currentUser.id ? 'self' : '');
+  div.textContent = msg.message;
+  document.getElementById('messages').appendChild(div);
+  div.scrollIntoView();
+}
 
-  // Initialize main app
-  async function initApp() {
-    showSection('main-app');
-    $('#meInfo').textContent = `${currentUsername} (${currentUser.email})`;
-    setRoomHeader('Global Chat', 'GC');
-    loadFriends();
-    loadRequests();
-    loadGlobalMessages();
-    subscribeGlobal();
+document.getElementById('sendBtn').onclick = async () => {
+  const input = document.getElementById('messageInput');
+  if(!input.value) return;
+  if(chatType === 'public') {
+    await supabase.from('public_messages').insert([{ sender_id: currentUser.id, message: input.value }]);
+  } else if(activeChat) {
+    await supabase.from('messages').insert([{ sender_id: currentUser.id, receiver_id: activeChat, message: input.value }]);
+  }
+  input.value = '';
+  setTyping(false);
+}
 
-    $('#composerInput').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !isMobile()) {
-        e.preventDefault();
-        sendMessage();
+// ----------------- CHAT SELECTION -----------------
+function openChat(friendId) {
+  activeChat = friendId;
+  chatType = 'private';
+  loadMessages();
+}
+
+// ----------------- REALTIME -----------------
+function subscribeMessages() {
+  // Private messages
+  supabase.channel('private_messages')
+    .on('postgres_changes', { event:'INSERT', schema:'public', table:'messages' }, payload => {
+      if(payload.new.sender_id === activeChat || payload.new.receiver_id === activeChat) displayMessage(payload.new);
+    })
+    // Public messages
+    .on('postgres_changes', { event:'INSERT', schema:'public', table:'public_messages' }, payload => {
+      if(chatType==='public') displayMessage(payload.new);
+    })
+    .subscribe();
+}
+
+// ----------------- TYPING INDICATOR -----------------
+let typingTimeout;
+document.getElementById('messageInput').addEventListener('input', () => {
+  setTyping(true);
+  clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(()=> setTyping(false), 2000);
+});
+
+async function setTyping(state) {
+  if(chatType==='public') {
+    await supabase.from('typing').upsert({ user_id: currentUser.id, chat_type:'public', target_id:null, is_typing:state, updated_at: new Date() });
+  } else if(activeChat) {
+    await supabase.from('typing').upsert({ user_id: currentUser.id, chat_type:'private', target_id:activeChat, is_typing:state, updated_at: new Date() });
+  }
+}
+
+async function subscribeTyping() {
+  supabase.channel('typing')
+    .on('postgres_changes', { event:'UPDATE', schema:'public', table:'typing' }, payload => {
+      const t = payload.new;
+      if(chatType==='public' && t.chat_type==='public' && t.user_id!==currentUser.id) {
+        document.getElementById('typingIndicator').textContent = t.is_typing ? "Someone is typing..." : "";
+      } else if(chatType==='private' && t.chat_type==='private' && t.target_id===currentUser.id) {
+        document.getElementById('typingIndicator').textContent = t.is_typing ? "Friend is typing..." : "";
       }
-    });
-    $('#sendBtn').onclick = sendMessage;
-  }
-
-  // Helper: mobile detection
-  const isMobile = () => matchMedia('(max-width: 900px)').matches || 'ontouchstart' in window;
-
-  // Set chat header
-  function setRoomHeader(title, initialsTxt) {
-    $('#roomTitle').textContent = title;
-    $('#roomAvatar').textContent = initialsTxt;
-  }
-
-  // Send message
-  async function sendMessage() {
-    const message = $('#composerInput').value.trim();
-    if (!message || !currentUser || !currentUsername) return;
-
-    if (currentView?.type === 'global') {
-      const { error } = await supabase
-        .from('messages')
-        .insert({ username: currentUsername, message, sender_email: currentUser.email });
-      if (!error) $('#composerInput').value = '';
-    } else if (currentView?.type === 'dm') {
-      const { error } = await supabase
-        .from('dm_messages')
-        .insert({
-          sender_email: currentUser.email,
-          receiver_email: currentView.peerEmail,
-          content: message
-        });
-      if (!error) $('#composerInput').value = '';
-    }
-  }
-
-  // Load global messages
-  async function loadGlobalMessages() {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .order('created_at', { ascending: true });
-    if (error) {
-      console.error(error);
-      return;
-    }
-    const msgDiv = $('#messages');
-    msgDiv.innerHTML = '';
-    data.forEach(m => appendBubble(msgDiv, m.username, m.sender_email === currentUser.email, m.message));
-  }
-
-  // Subscribe to new messages
-  function subscribeGlobal() {
-    supabase
-      .channel('global-feed')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
-        if (currentView?.type === 'global') {
-          appendBubble($('#messages'), payload.new.username, payload.new.sender_email === currentUser.email, payload.new.message);
-        }
-      })
-      .subscribe();
-  }
-
-  // Other functions (openDM, searchUsers, etc.) omitted for brevity...
-  // (You can keep your existing implementations here)
-
-  // Append message bubble
-  function appendBubble(container, fromName, mine, text) {
-    const wrap = document.createElement('div');
-    wrap.className = `bubble ${mine ? 'me' : 'them'}`;
-    wrap.innerHTML = `
-      <div class="from">
-        <div class="avatar" style="width:26px;height:26px;font-size:.75rem;">${initials(fromName)}</div>
-        <div>${fromName}</div>
-      </div>
-      <div>${escapeHtml(text)}</div>
-    `;
-    container.appendChild(wrap);
-    container.scrollTop = container.scrollHeight;
-  }
-
-  function escapeHtml(str) {
-    return str.replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
-  }
+    })
+    .subscribe();
+}
 </script>
 </body>
 </html>
