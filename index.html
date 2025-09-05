@@ -1,732 +1,997 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta charset="utf-8" />
+  <meta charset="UTF-8">
   <title>Texter — Global & DMs</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    :root{
-      --bg:#0b1020;           /* deep navy */
-      --panel:#121a2b;        /* card/nav */
-      --panel-2:#0f172a;      /* chat area */
-      --accent:#3b82f6;       /* blue */
-      --accent-2:#60a5fa;     /* lighter blue */
-      --text:#e5e7eb;         /* light */
-      --muted:#8aa0c6;        /* muted */
-      --border:#1f2a44;       /* lines */
-      --me:#1d4ed8;           /* my bubble */
-      --them:#1f2937;         /* others bubble */
+    :root {
+      --bg:#0b1020;
+      --panel:#121a2b;
+      --panel-2:#0f172a;
+      --accent:#3b82f6;
+      --accent-2:#60a5fa;
+      --text:#e5e7eb;
+      --muted:#8aa0c6;
+      --border:#1f2a44;
+      --me:#1d4ed8;
+      --them:#1f2937;
       --danger:#ef4444;
       --success:#22c55e;
-      --bg:#0b1020; --panel:#121a2b; --panel-2:#0f172a; --accent:#3b82f6; --text:#e5e7eb;
-      --muted:#8aa0c6; --border:#1f2a44; --me:#1d4ed8; --them:#1f2937;
     }
-    *{box-sizing:border-box}
-    body{
-      margin:0;background:linear-gradient(140deg,#000,#0b1a33 45%,#000);
+    * { box-sizing:border-box; }
+    body {
+      margin:0;
+      background:linear-gradient(140deg,#000,#0b1a33 45%,#000);
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-      color:var(--text); height:100vh; display:flex; align-items:center; justify-content:center;
+      color:var(--text);
+      height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
     }
-    .app{
-      width:100%; max-width:1100px; height:92vh; display:grid; gap:10px;
-      grid-template-columns:280px 1fr; grid-template-rows:auto 1fr auto;
+    /* App layout */
+    .app {
+      width:100%; max-width:1100px; height:92vh;
+      display:grid; gap:10px;
+      grid-template-columns:280px 1fr;
+      grid-template-rows:auto 1fr auto;
       grid-template-areas:
         "header header"
         "sidebar chat"
         "sidebar input";
-      background:var(--bg); border:1px solid var(--border); border-radius:14px; overflow:hidden;
+      background:var(--bg);
+      border:1px solid var(--border);
+      border-radius:14px;
+      overflow:hidden;
       box-shadow:0 10px 40px rgba(0,0,0,.4);
     }
-    header{
-      grid-area:header; background:var(--panel); padding:14px 18px; display:flex; align-items:center; justify-content:space-between;
+    header {
+      grid-area:header;
+      background:var(--panel);
+      padding:14px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
       border-bottom:1px solid var(--border);
     }
-    header .brand{font-weight:700; letter-spacing:.4px; color:var(--accent-2)}
-    header .me{font-size:.95rem; color:var(--muted)}
-    .sidebar{
-      grid-area:sidebar; background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column;
-    }
-    .section-title{padding:10px 12px; font-size:.82rem; color:var(--muted); border-bottom:1px solid var(--border)}
-    .search{padding:10px; border-bottom:1px solid var(--border);}
-    .search input{width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:#0c1426; color:var(--text);}
-    .results, .friends{overflow:auto}
-    .list-item{
-      display:flex; gap:10px; align-items:center; padding:10px 12px; cursor:pointer; border-bottom:1px solid rgba(255,255,255,.03);
-    }
-    body{margin:0;background:linear-gradient(140deg,#000,#0b1a33 45%,#000);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--text);height:100vh;display:flex;align-items:center;justify-content:center}
-    .app{width:100%;max-width:1100px;height:92vh;display:grid;gap:10px;grid-template-columns:280px 1fr;grid-template-rows:auto 1fr auto;grid-template-areas:"header header" "sidebar chat" "sidebar input";background:var(--bg);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.4)}
-    header{grid-area:header;background:var(--panel);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
-    .brand{font-weight:700;color:#60a5fa}
-    .sidebar{grid-area:sidebar;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column}
-    .section-title{padding:10px 12px;font-size:.82rem;color:var(--muted);border-bottom:1px solid var(--border)}
-    .search{padding:10px;border-bottom:1px solid var(--border)}
-    .search input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#0c1426;color:var(--text)}
-    .results, .friends{overflow:auto;flex:1}
-    .list-item{display:flex;gap:10px;align-items:center;padding:10px 12px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.03)}
-    .list-item:hover{background:#0e1730}
-    .list-item .meta{display:flex; flex-direction:column}
-    .meta{display:flex;flex-direction:column}
-    .name{font-size:.95rem}
-    .muted{color:var(--muted); font-size:.8rem}
-    .row{display:flex; align-items:center; gap:8px}
-    .btn{
-      padding:8px 10px; font-size:.8rem; border-radius:8px; border:1px solid var(--border); background:#0c1426; color:var(--text); cursor:pointer;
-    }
-    .btn.primary{background:var(--accent); border-color:transparent}
-    .btn.success{background:var(--success); border-color:transparent}
-    .btn.danger{background:var(--danger); border-color:transparent}
-    .btn.ghost{background:transparent}
-    .btn:disabled{opacity:.5; cursor:not-allowed}
-    .avatar{
-      width:34px; height:34px; border-radius:50%; background:#0e2a5a; display:grid; place-items:center;
-      color:#cde1ff; font-weight:700; font-size:.9rem; border:1px solid #18325e;
-    }
+    header .brand { font-weight:700; letter-spacing:.4px; color:var(--accent-2); }
+    header .me { font-size:.95rem; color:var(--muted); }
 
-    .chat{
-      grid-area:chat; display:flex; flex-direction:column; background:var(--panel-2);
+    /* Sidebar */
+    .sidebar {
+      grid-area:sidebar;
+      background:var(--panel);
+      border-right:1px solid var(--border);
+      display:flex;
+      flex-direction:column;
     }
-    .chat-header{
-      padding:12px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px;
+    .sidebar .section-btn {
+      padding:12px;
+      border-bottom:1px solid var(--border);
+      cursor:pointer;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-size:.9rem;
+      color:var(--accent-2);
     }
-    .muted{color:var(--muted);font-size:.8rem}
-    .row{display:flex;align-items:center;gap:8px}
-    .btn{padding:8px 10px;font-size:.8rem;border-radius:8px;border:1px solid var(--border);background:#0c1426;color:var(--text);cursor:pointer}
-    .btn.primary{background:var(--accent);border-color:transparent}
-    .btn.success{background:#22c55e;border-color:transparent}
-    .btn.danger{background:#ef4444;border-color:transparent}
-    .avatar{width:34px;height:34px;border-radius:50%;background:#0e2a5a;display:grid;place-items:center;color:#cde1ff;font-weight:700;font-size:.9rem;border:1px solid #18325e}
+    .sidebar .badge {
+      background:var(--danger);
+      color:#fff;
+      border-radius:10px;
+      padding:2px 8px;
+      font-size:.75rem;
+    }
+    .hidden { display:none; }
+    .search, .results, .friends { overflow:auto; }
+    .search input {
+      width:100%; padding:10px 12px; border-radius:10px;
+      border:1px solid var(--border); background:#0c1426; color:var(--text);
+    }
+    .list-item {
+      display:flex; gap:10px; align-items:center;
+      padding:10px 12px; cursor:pointer;
+      border-bottom:1px solid rgba(255,255,255,.03);
+    }
+    .list-item:hover { background:#0e1730; }
+    .list-item .meta { display:flex; flex-direction:column; }
+    .name { font-size:.95rem; }
+    .muted { color:var(--muted); font-size:.8rem; }
+    .btn {
+      padding:6px 10px; font-size:.8rem;
+      border-radius:8px; border:1px solid var(--border);
+      background:#0c1426; color:var(--text);
+      cursor:pointer;
+    }
+    .btn.primary { background:var(--accent); border-color:transparent; }
+    .btn.success { background:var(--success); border-color:transparent; }
+    .btn.danger { background:var(--danger); border-color:transparent; }
+    .avatar {
+      width:34px; height:34px; border-radius:50%; background:#0e2a5a;
+      display:grid; place-items:center; color:#cde1ff; font-weight:700;
+      font-size:.9rem; border:1px solid #18325e;
+    }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Texter — Global & DMs (Fixed Global Send)</title>
+<style>
+:root{
+  --bg:#0b1020; --panel:#121a2b; --panel-2:#0f172a; --accent:#3b82f6; --text:#e5e7eb;
+  --muted:#8aa0c6; --border:#1f2a44; --me:#2563eb; --them:#1f2937; --danger:#ef4444; --success:#22c55e;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  background:linear-gradient(140deg,#000,#0b1a33 45%,#000); color:var(--text); display:flex; align-items:center; justify-content:center;
+  min-height:100vh;
+}
 
-    .chat{grid-area:chat;display:flex;flex-direction:column;background:var(--panel-2)}
-    .chat-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
-    .chat-title{font-weight:600}
-    .messages{
-      flex:1; overflow:auto; padding:14px;
-      display:flex; flex-direction:column; gap:10px;
+    /* Chat area */
+    .chat { grid-area:chat; display:flex; flex-direction:column; background:var(--panel-2); }
+    .chat-header {
+      padding:12px 16px; border-bottom:1px solid var(--border);
+      display:flex; align-items:center; gap:10px;
     }
-    .bubble{
-      max-width:72%; padding:10px 12px; border-radius:12px; line-height:1.3; position:relative; word-wrap:break-word;
+    .chat-title { font-weight:600; }
+    .messages { flex:1; overflow:auto; padding:14px; display:flex; flex-direction:column; gap:10px; }
+    .bubble {
+      max-width:72%; padding:10px 12px; border-radius:12px; line-height:1.3;
+      position:relative; word-wrap:break-word;
     }
-    .bubble.me{align-self:flex-end; background:var(--me)}
-    .bubble.them{align-self:flex-start; background:var(--them)}
-    .bubble .from{
-      display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:.82rem; color:#cdd8ff;
+    .bubble.me { align-self:flex-end; background:var(--me); }
+    .bubble.them { align-self:flex-start; background:var(--them); }
+    .bubble .from {
+      display:flex; align-items:center; gap:8px;
+      margin-bottom:6px; font-size:.82rem; color:#cdd8ff;
     }
-    .composer{
-      grid-area:input; display:flex; gap:10px; padding:12px; background:var(--panel); border-top:1px solid var(--border);
-    }
-    .composer input{
-      flex:1; padding:12px 14px; border-radius:10px; border:1px solid var(--border); background:#0c1426; color:var(--text);
-    }
-    .messages{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
-    .bubble{max-width:72%;padding:10px 12px;border-radius:12px;line-height:1.3;position:relative;word-wrap:break-word}
-    .bubble.me{align-self:flex-end;background:var(--me);color:#fff}
-    .bubble.them{align-self:flex-start;background:var(--them);color:#e6eefc}
-    .bubble .from{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:.82rem;color:#cdd8ff}
-    .composer{grid-area:input;display:flex;gap:10px;padding:12px;background:var(--panel);border-top:1px solid var(--border)}
-    .composer input{flex:1;padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:#0c1426;color:var(--text)}
-    .send-mobile{display:none}
-    @media (max-width:900px){
-      .app{grid-template-columns:1fr; grid-template-areas:
-        "header"
-        "chat"
-        "input";
-      }
-      .sidebar{display:none}
-      .send-mobile{display:inline-flex}
-    }
+/* Layout */
+.app {
+  width:100%; max-width:1100px; height:92vh; display:grid; gap:10px;
+  grid-template-columns:280px 1fr; grid-template-rows:auto 1fr auto;
+  grid-template-areas:"header header" "sidebar chat" "sidebar input";
+  background:var(--bg); border:1px solid var(--border); border-radius:12px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,.4);
+}
+header{grid-area:header; background:var(--panel); padding:14px 18px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border)}
+.brand{color:var(--accent); font-weight:700}
+.meInfo{color:var(--muted)}
 
-    /* auth screens */
-    .auth-wrap{width:100%; max-width:420px; background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:18px; box-shadow:0 10px 40px rgba(0,0,0,.35)}
-    .auth h2{margin:0 0 10px}
-    .auth input, .auth button{width:100%}
-    .auth input{background:#0c1426; border:1px solid var(--border); color:var(--text); padding:12px 14px; border-radius:10px; margin:6px 0}
-    .auth button{padding:12px 14px; border-radius:10px; background:var(--accent); border:none; color:#fff; cursor:pointer}
-    .note{color:var(--muted); font-size:.85rem}
-    @media (max-width:900px){.app{grid-template-columns:1fr;grid-template-areas:"header" "chat" "input";}.sidebar{display:none}.send-mobile{display:inline-flex}}
-    .auth-wrap{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px;box-shadow:0 10px 40px rgba(0,0,0,.35);margin:12px auto}
-    .auth-wrap input{background:#0c1426;border:1px solid var(--border);color:var(--text);padding:12px 14px;border-radius:10px;margin:6px 0}
-    .auth-wrap button{padding:12px 14px;border-radius:10px;background:var(--accent);border:none;color:#fff;cursor:pointer}
-    .note{color:var(--muted);font-size:.85rem}
-    .small-muted{color:var(--muted);font-size:.78rem}
+    /* Composer */
+    .composer {
+      grid-area:input;
+      display:flex; gap:10px; padding:12px;
+      background:var(--panel);
+      border-top:1px solid var(--border);
+    }
+    .composer input {
+      flex:1; padding:12px 14px; border-radius:10px;
+      border:1px solid var(--border);
+      background:#0c1426; color:var(--text);
+    }
+    .send-mobile { display:none; }
+    @media (max-width:900px) {
+      .app { grid-template-columns:1fr; grid-template-areas:"header" "chat" "input"; }
+      .sidebar { display:none; }
+      .send-mobile { display:inline-flex; }
+    }
+/* Sidebar */
+.sidebar{grid-area:sidebar; background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column}
+.sidebar-top{display:flex; gap:8px; padding:10px; border-bottom:1px solid var(--border); align-items:center}
+.sidebar-top .btn{flex:1}
+.results, .friends{overflow:auto; padding-bottom:8px}
+.search input{width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:#071228; color:var(--text)}
+.list-item{display:flex; gap:10px; align-items:center; padding:10px 12px; cursor:pointer; border-bottom:1px solid rgba(255,255,255,.03)}
+.list-item:hover{background:#0e1730}
+.avatar{width:36px; height:36px; border-radius:50%; display:grid; place-items:center; font-weight:700; color:#cde1ff; background:#0e2a5a; border:1px solid #18325e}
+.meta .name{font-size:.95rem}
+.meta .muted{color:var(--muted); font-size:.82rem}
+.badge{background:var(--danger); color:white; border-radius:999px; padding:2px 8px; font-size:12px}
+
+    /* Auth screens */
+    .auth-wrap {
+      width:100%; max-width:420px; background:var(--panel);
+      border:1px solid var(--border); border-radius:12px;
+      padding:18px; box-shadow:0 10px 40px rgba(0,0,0,.35);
+    }
+    .auth input, .auth button {
+      width:100%; margin:6px 0;
+      padding:12px 14px; border-radius:10px;
+    }
+    .auth input {
+      background:#0c1426; border:1px solid var(--border); color:var(--text);
+    }
+    .auth button {
+      background:var(--accent); border:none; color:#fff; cursor:pointer;
+    }
+    .note { color:var(--muted); font-size:.85rem; }
   </style>
+/* Chat */
+.chat{grid-area:chat; display:flex; flex-direction:column; background:var(--panel-2)}
+.chat-header{padding:12px 16px; border-bottom:1px solid var(--border); display:flex; gap:10px; align-items:center}
+.messages{flex:1; overflow:auto; padding:14px; display:flex; flex-direction:column; gap:10px}
+.bubble{max-width:78%; padding:10px 12px; border-radius:12px; line-height:1.3; word-wrap:break-word}
+.bubble.me{align-self:flex-end; background:var(--me); color:white}
+.bubble.them{align-self:flex-start; background:var(--them); color:#e6eefc}
+.bubble .from{display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:.82rem; color:#cdd8ff}
+
+/* Composer */
+.composer{grid-area:input; display:flex; gap:10px; padding:12px; background:var(--panel); border-top:1px solid var(--border)}
+.composer input{flex:1; padding:12px; border-radius:10px; border:1px solid var(--border); background:#071228; color:var(--text)}
+.btn{padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:#0c1426; color:var(--text); cursor:pointer}
+.btn.primary{background:var(--accent); border-color:transparent}
+.btn.hidden{display:none}
+
+/* Small screens */
+@media (max-width:900px){ .app{grid-template-columns:1fr; grid-template-areas:"header" "chat" "input"} .sidebar{display:none} .send-mobile{display:inline-flex} }
+
+/* Auth / Modals */
+.overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); z-index:60; }
+.card{background:var(--panel); padding:18px; border-radius:10px; border:1px solid var(--border); width:95%; max-width:420px}
+.note{color:var(--muted); font-size:.9rem}
+.small{font-size:.85rem; color:var(--muted)}
+</style>
 </head>
 <body>
+  <!-- Login -->
+  <div id="auth" class="auth" style="display:none;">
+    <div class="auth-wrap">
+      <h2 style="color:var(--accent-2)">Welcome back</h2>
+      <p class="note">Log in with your email & password. First-time users will be asked to set a username.</p>
+      <input type="email" id="loginEmail" placeholder="Email" />
+      <input type="password" id="loginPassword" placeholder="Password" />
+      <button id="loginBtn">Log In</button>
 
-<!-- ======================= AUTH (auto-hides if session exists) ======================= -->
-<div id="auth" class="auth" style="display:none;">
-<!-- Auth screen (auto-hidden if session exists) -->
-<div id="authScreen" style="display:none; width:100%; max-width:900px;">
-  <div class="auth-wrap">
-    <h2 style="color:var(--accent-2)">Welcome back</h2>
-    <p class="note">Log in with your email & password. First-time users will be asked to pick a username.</p>
-    <input type="email" id="loginEmail" placeholder="Email" />
-    <input type="password" id="loginPassword" placeholder="Password" />
-    <h2 style="color:#60a5fa;margin:0 0 8px">Welcome</h2>
-    <p class="note">Log in with email & password. First-time users pick a username.</p>
+<!-- AUTH modal (shows if not signed in) -->
+<div id="authOverlay" class="overlay" style="display:none;">
+  <div class="card">
+    <h2 style="color:var(--accent)">Welcome</h2>
+    <p class="note">Log in with email & password. First-time users will set a username.</p>
     <input id="loginEmail" type="email" placeholder="Email" />
     <input id="loginPassword" type="password" placeholder="Password" />
-    <button id="loginBtn">Log In</button>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button id="loginBtn" class="btn primary">Log in</button>
+      <button id="signupBtn" class="btn">Sign up</button>
+    </div>
+    <p class="small" style="margin-top:8px">Open the browser console (F12 → Console) if anything fails — errors will be logged there.</p>
   </div>
 </div>
 
-<!-- ======================= USERNAME SETUP (shown if missing) ======================= -->
-<div id="usernameSetup" class="auth" style="display:none;">
-<!-- Username setup -->
-<div id="usernameScreen" style="display:none; width:100%; max-width:900px;">
-  <div class="auth-wrap">
-    <h2 style="color:var(--accent-2)">Create your username</h2>
-    <p class="note">Letters / numbers / underscore. Max 15 chars. Pick something classmates will recognize.</p>
-    <input type="text" id="usernameInput" placeholder="e.g. alex_p" />
-    <h2 style="color:#60a5fa;margin:0 0 8px">Create your username</h2>
-    <p class="note">Letters / numbers / underscore. Max 15 chars.</p>
-    <input id="usernameInput" type="text" placeholder="e.g. alex_99" />
-    <button id="saveUsernameBtn">Save Username</button>
+  <!-- Username Setup -->
+  <div id="usernameSetup" class="auth" style="display:none;">
+    <div class="auth-wrap">
+      <h2 style="color:var(--accent-2)">Create your username</h2>
+      <p class="note">Max 15 characters. Letters/numbers/underscores only.</p>
+      <input type="text" id="usernameInput" placeholder="e.g. alex_p" />
+      <button id="saveUsernameBtn">Save Username</button>
+<!-- USERNAME modal (first-time) -->
+<div id="usernameOverlay" class="overlay" style="display:none;">
+  <div class="card">
+    <h3 style="color:var(--accent)">Pick a username</h3>
+    <p class="note">Letters, numbers, underscore. Max 15 characters.</p>
+    <input id="usernameField" type="text" placeholder="e.g. alex_99" />
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button id="saveUsername" class="btn primary">Save</button>
+    </div>
+    <p id="usernameError" class="small" style="color:var(--danger);display:none;margin-top:8px"></p>
   </div>
 </div>
 
-<!-- ======================= APP ======================= -->
-<!-- App -->
-<div id="app" class="app" style="display:none;">
+<!-- MAIN APP -->
+<div id="appRoot" class="app" style="display:none;">
   <header>
     <div class="brand">Texter</div>
-    <div class="me" id="meInfo">Signed in as —</div>
-    <div class="me" id="meInfo">Signed in —</div>
+    <div class="meInfo" id="meInfo">—</div>
   </header>
 
-  <!-- Sidebar: search + requests + friends -->
+  <!-- Main App -->
+  <div id="app" class="app" style="display:none;">
+    <header>
+      <div class="brand">Texter</div>
+      <div class="me" id="meInfo"></div>
+    </header>
+
+    <aside class="sidebar">
+      <div class="section-btn" id="toggleSearch">Find Friends</div>
+      <div id="searchSection" class="hidden">
+        <div class="search"><input id="searchBox" type="text" placeholder="Search username…" /></div>
+        <div class="results" id="searchResults"></div>
+      </div>
+
+      <div class="section-btn" id="toggleRequests">
+        Requests <span id="reqBadge" class="badge hidden">0</span>
+      </div>
+      <div id="requestsSection" class="hidden">
+        <div class="results" id="requests"></div>
+      </div>
+
+      <div class="section-btn">Friends</div>
+      <div class="friends" id="friends"></div>
+    </aside>
+
+    <section class="chat">
+      <div class="chat-header">
+        <div class="avatar" id="roomAvatar">GC</div>
+        <div class="chat-title" id="roomTitle">Global Chat</div>
+      </div>
+      <div class="messages" id="messages"></div>
+    </section>
+
+    <div class="composer">
+      <input id="composerInput" type="text" placeholder="Type a message…" />
+      <button id="sendBtn" class="btn primary send-mobile">Send</button>
   <aside class="sidebar">
-    <div class="section-title">Find friends</div>
-    <div class="search">
-      <input id="searchBox" type="text" placeholder="Search username…" />
+    <div class="sidebar-top">
+      <button id="toggleAdd" class="btn">➕ Add</button>
+      <button id="toggleReq" class="btn">🔔 Requests <span id="reqCount" class="badge" style="display:none;margin-left:6px">0</span></button>
+      <button id="logoutBtn" class="btn" style="margin-left:auto">Sign out</button>
     </div>
-    <div class="search"><input id="searchBox" type="text" placeholder="Search username…" /></div>
-    <div class="results" id="searchResults"></div>
 
-    <div class="section-title">Requests</div>
-    <div class="results" id="requests"></div>
-
-    <div class="section-title">Friends</div>
-    <div class="friends" id="friends"></div>
-    <div class="section-title">Friends & Requests</div>
-    <div style="flex:1; display:flex; flex-direction:column; overflow:auto;">
-      <div class="friends results" id="friends"></div>
-      <div style="border-top:1px solid var(--border); padding:8px 12px; color:var(--muted); font-size:.82rem">Requests</div>
-      <div class="results" id="requests" style="max-height:180px; overflow:auto"></div>
+    <div style="padding:10px;border-bottom:1px solid var(--border)">
+      <div class="search"><input id="searchBox" placeholder="Search username…" /></div>
     </div>
+
+    <div class="friends" id="friendsList" style="padding-bottom:10px"></div>
   </aside>
 
-  <!-- Chat area -->
   <section class="chat">
     <div class="chat-header">
       <div class="avatar" id="roomAvatar">GC</div>
-@@ -168,219 +101,167 @@ <h2 style="color:var(--accent-2)">Create your username</h2>
+      <div class="chat-title" id="roomTitle">Global Chat</div>
+    </div>
+
     <div class="messages" id="messages"></div>
   </section>
 
-  <!-- Composer -->
   <div class="composer">
-    <input id="composerInput" type="text" placeholder="Type a message… (Enter to send)" />
-    <!-- Mobile send button (desktop hidden) -->
-    <input id="composerInput" type="text" placeholder="Type a message… (Enter to send on desktop)" />
-    <button id="sendBtn" class="btn primary send-mobile">Send</button>
+    <input id="composerInput" placeholder="Type a message… (Enter to send on desktop)" />
+    <button id="sendMobileBtn" class="btn primary send-mobile">Send</button>
   </div>
 </div>
 
-<!-- ======================= SUPABASE & APP LOGIC ======================= -->
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const client = supabase.createClient(
+      "https://fhokwoazuhkwrkrweddd.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc"
+    );
+
+    const $ = id => document.getElementById(id);
+    const isMobile = () => matchMedia("(max-width: 900px)").matches || 'ontouchstart' in window;
+    const initials = name => (name||"?").slice(0,2).toUpperCase();
+    const escapeHtml = s => s.replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+
+    let session = null, me = { email:null, username:null }, currentView = { type:"global", peerEmail:null };
+
+    // Startup
+    (async function boot() {
+      const { data:{ session: s } } = await client.auth.getSession();
+      session = s;
+      if(!session) show("auth"); else afterLogin(session.user);
+    })();
+    client.auth.onAuthStateChange((event, sess)=>{
+      if(event==="SIGNED_OUT"){ me={}; show("auth"); }
+      if(sess) session=sess;
+    });
+<!-- Add friend popup (floating, toggled) -->
+<div id="addPopup" style="position:fixed; left:22px; top:70px; width:300px; display:none; z-index:50">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div><strong>Add friends</strong></div>
+      <button id="closeAdd" class="btn">X</button>
+    </div>
+    <div style="margin-top:10px">
+      <input id="addSearch" placeholder="search username" />
+      <div id="addResults" style="margin-top:8px; max-height:260px; overflow:auto"></div>
+    </div>
+  </div>
+</div>
+
+    // Section toggle
+    function show(which){
+      $("auth").style.display = which==="auth"?"flex":"none";
+      $("usernameSetup").style.display = which==="username"?"flex":"none";
+      $("app").style.display = which==="app"?"grid":"none";
+    }
+<!-- Requests popup -->
+<div id="reqPopup" style="position:fixed; left:22px; top:70px; width:300px; display:none; z-index:50">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div><strong>Requests</strong></div>
+      <button id="closeReq" class="btn">X</button>
+    </div>
+    <div id="reqList" style="margin-top:10px; max-height:320px; overflow:auto"></div>
+  </div>
+</div>
+
+    // Login
+    $("loginBtn").onclick = async ()=>{
+      const email=$("loginEmail").value.trim(), pass=$("loginPassword").value.trim();
+      const { data, error } = await client.auth.signInWithPassword({ email, password:pass });
+      if(error) return alert(error.message);
+      afterLogin(data.user);
+    };
+
+    async function afterLogin(user){
+      me.email=user.email;
+      const { data: row } = await client.from("users").select("username").eq("email", me.email).maybeSingle();
+      if(!row || !row.username) show("username"); else { me.username=row.username; initApp(); }
+    }
+<!-- Supabase library -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-/*
-REQUIRED TABLES (run in Supabase SQL editor if you haven't):
+/* =========================
+   CONFIG: project URL & anon key
+   (these are the ones you shared earlier)
+   ========================= */
+const SUPABASE_URL = "https://fhokwoazuhkwrkrweddd.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc";
 
-create table if not exists public.users (
-  id uuid primary key default uuid_generate_v4(),
-  email text unique not null,
-  username text unique,
-  role text default 'user',
-  avatar_url text,
-  created_at timestamp with time zone default now()
-);
+    // Save username
+    $("saveUsernameBtn").onclick = async ()=>{
+      const u=$("usernameInput").value.trim();
+      if(!/^[a-zA-Z0-9_]{1,15}$/.test(u)) return alert("Invalid username");
+      const { data: exists } = await client.from("users").select("username").eq("username", u).maybeSingle();
+      if(exists) return alert("Username taken");
+      const { error } = await client.from("users").upsert({ email:me.email, username:u }, { onConflict:"email" });
+      if(error) return alert(error.message);
+      me.username=u; initApp();
+    };
 
-create table if not exists public.messages (
-  id bigint generated by default as identity primary key,
-  username text not null,
-  message text not null,
-  sender_email text not null,
-  created_at timestamp with time zone default now()
-);
+    // Init app
+    function initApp(){
+      $("meInfo").textContent = me.username;
+      show("app");
+      setRoomHeader("Global Chat","GC");
+      loadFriends(); loadRequests(); loadGlobalMessages(); subscribeGlobal();
+      $("composerInput").addEventListener("keydown", e=>{ if(e.key==="Enter"&&!isMobile()){ e.preventDefault(); sendMessage(); } });
+      $("sendBtn").onclick = sendMessage;
+      $("searchBox").addEventListener("input", debounce(searchUsers, 300));
+      $("toggleSearch").onclick = ()=> $("searchSection").classList.toggle("hidden");
+      $("toggleRequests").onclick = ()=> $("requestsSection").classList.toggle("hidden");
+    }
+/* create client */
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
--- Friend relationships (Snapchat-style)
-create table if not exists public.friends (
-  id bigint generated by default as identity primary key,
-  requester_email text not null,
-  addressee_email text not null,
-  status text not null default 'pending', -- 'pending' | 'accepted' | 'declined'
-  created_at timestamp with time zone default now(),
-  unique (requester_email, addressee_email)
-);
-
--- Direct messages
-create table if not exists public.dm_messages (
-  id bigint generated by default as identity primary key,
-  sender_email text not null,
-  receiver_email text not null,
-  content text not null,
-  created_at timestamp with time zone default now()
-);
-
--- (Optional) RLS to add later. For now keep RLS off while building.
-SQL (if you don't have tables) included in earlier file — make sure messages, dm_messages, users, friends exist.
-*/
-
-const client = supabase.createClient(
-  "https://fhokwoazuhkwrkrweddd.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc"
-);
-
-// ---------- UI helpers ----------
-// helpers
-const $ = (id)=>document.getElementById(id);
-const isMobile = () => matchMedia("(max-width: 900px)").matches || 'ontouchstart' in window;
-const isMobile = ()=> matchMedia("(max-width:900px)").matches || 'ontouchstart' in window;
-const initials = (name='?')=>{
-  const parts = name.trim().split(/[\s_]+/);
-  const parts = (name||'').trim().split(/[\s_]+/);
-  const a = (parts[0]||'')[0]||'?';
-  const b = (parts[1]||'')[0]||'';
-  return (a+b).toUpperCase();
+    function setRoomHeader(title, initialsTxt){ $("roomTitle").textContent=title; $("roomAvatar").textContent=initialsTxt; }
+/* helpers */
+const $ = id => document.getElementById(id);
+const isMobile = () => matchMedia("(max-width:900px)").matches || 'ontouchstart' in window;
+const initials = (s='?')=>{
+  if(!s) return '?';
+  const parts = String(s).split(/[\s_]+/).filter(Boolean);
+  return (parts[0]||'')[0] + ((parts[1]||'')[0] || '');
 };
+const escapeHtml = s => (s||'').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 
-// ---------- State ----------
+    async function sendMessage(){
+      const txt=$("composerInput").value.trim(); if(!txt) return;
+      if(currentView.type==="global"){
+        const { error } = await client.from("messages").insert({ username:me.username, message:txt, sender_email:me.email });
+        if(!error) $("composerInput").value="";
+      } else {
+        const { error } = await client.from("dm_messages").insert({ sender_email:me.email, receiver_email:currentView.peerEmail, content:txt });
+        if(!error) $("composerInput").value="";
+      }
+    }
+/* state */
 let session = null;
 let me = { email:null, username:null };
-let currentView = { type:"global", peerEmail:null, peerUsername:null };
+let currentView = { type: 'global', peerEmail: null, peerUsername: null };
+let messagesDedup = new Set(); // prevent duplicates
+let globalChannel = null;
 let dmChannel = null;
 
-// ---------- Auth bootstrap (stay logged in) ----------
-// boot: restore session if any
+    async function loadGlobalMessages(){
+      const { data } = await client.from("messages").select("*").order("created_at",{ascending:true});
+      const box=$("messages"); box.innerHTML="";
+      (data||[]).forEach(m=>appendBubble(box,m.username,m.sender_email===me.email,m.message));
+    }
+    function subscribeGlobal(){
+      client.channel("global-feed").on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},payload=>{
+        if(currentView.type==="global") appendBubble($("messages"),payload.new.username,payload.new.sender_email===me.email,payload.new.message);
+      }).subscribe();
+    }
+/* ========= boot: restore session ========= */
 (async function boot(){
-  const { data:{ session: s } } = await client.auth.getSession();
-  const { data: { session: s } } = await client.auth.getSession();
-  session = s;
-  if(!session){ // show login
-    showSection("auth");
-  if(!session){
-    $("authScreen").style.display = "block";
-  } else {
-    await afterLogin(session.user);
+  try {
+    const { data: { session: s } } = await sb.auth.getSession();
+    session = s;
+    if(session && session.user){
+      await afterLogin(session.user);
+    } else {
+      showAuth();
+    }
+  } catch(err){
+    console.error("Boot error:", err);
+    showAuth();
   }
 })();
 
-// react to token refresh / logout
-client.auth.onAuthStateChange(async (event, sess)=>{
-  if(event === "SIGNED_OUT"){
+    async function openDM(peerEmail, peerUsername){
+      if(currentView.type==="dm"&&currentView.peerEmail===peerEmail){ currentView={type:"global"}; setRoomHeader("Global Chat","GC"); $("messages").innerHTML=""; return loadGlobalMessages(); }
+      currentView={type:"dm",peerEmail}; setRoomHeader(peerUsername,initials(peerUsername));
+      const { data } = await client.from("dm_messages").select("*").or(`and(sender_email.eq.${me.email},receiver_email.eq.${peerEmail}),and(sender_email.eq.${peerEmail},receiver_email.eq.${me.email})`).order("created_at",{ascending:true});
+      const box=$("messages"); box.innerHTML="";
+      (data||[]).forEach(m=>appendBubble(box,m.sender_email===me.email?me.username:peerUsername,m.sender_email===me.email,m.content));
+      subscribeDM(peerEmail,peerUsername);
+    }
+    let dmChannel=null;
+    function subscribeDM(peerEmail, peerUsername){
+      if(dmChannel) client.removeChannel(dmChannel);
+      dmChannel=client.channel(`dm-${me.email}-${peerEmail}`).on("postgres_changes",{event:"INSERT",schema:"public",table:"dm_messages"},payload=>{
+        const m=payload.new, involved=(m.sender_email===me.email&&m.receiver_email===peerEmail)||(m.sender_email===peerEmail&&m.receiver_email===me.email);
+        if(currentView.type==="dm"&&involved) appendBubble($("messages"),m.sender_email===me.email?me.username:peerUsername,m.sender_email===me.email,m.content);
+      }).subscribe();
+    }
+/* auth events (keeps UI in sync) */
+sb.auth.onAuthStateChange((event, s) => {
   if(event === 'SIGNED_OUT'){
+    // reset UI
     me = { email:null, username:null };
-    showSection("auth");
-    $("app").style.display = "none";
-    $("authScreen").style.display = "block";
+    messagesDedup.clear();
+    showAuth();
   }
-  if(sess){ session = sess; }
-  if(sess) session = sess;
+  if(s && s.user){
+    session = s;
+  }
 });
 
-// ---------- Section toggles ----------
-function showSection(which){
-  $("auth").style.display = which==="auth" ? "flex" : "none";
-  $("usernameSetup").style.display = which==="username" ? "flex" : "none";
-  $("app").style.display = which==="app" ? "grid" : "none";
-}
+    async function searchUsers(){
+      const q=$("searchBox").value.trim(), box=$("searchResults"); if(!q){ box.innerHTML=""; return; }
+      const { data } = await client.from("users").select("email,username").ilike("username",`%${q}%`).limit(20);
+      box.innerHTML=""; (data||[]).filter(u=>u.email!==me.email).forEach(u=>{
+        const item=document.createElement("div"); item.className="list-item";
+        item.innerHTML=`<div class="avatar">${initials(u.username)}</div><div class="meta"><div class="name">${u.username}</div><div class="muted">${u.email}</div></div><div style="margin-left:auto"><button class="btn primary">Add</button></div>`;
+        item.querySelector("button").onclick=()=>sendFriendReq(u.email);
+        box.appendChild(item);
+      });
+    }
+    async function sendFriendReq(toEmail){
+      await client.from("friend_requests").insert({ from_email:me.email,to_email:toEmail });
+      alert("Friend request sent!");
+    }
+/* ======== UI helpers ======== */
+function showAuth(){ $('authOverlay').style.display='flex'; $('usernameOverlay').style.display='none'; $('appRoot').style.display='none'; }
+function showUsername(){ $('authOverlay').style.display='none'; $('usernameOverlay').style.display='flex'; $('appRoot').style.display='none'; }
+function showApp(){ $('authOverlay').style.display='none'; $('usernameOverlay').style.display='none'; $('appRoot').style.display='grid'; }
 
-// ---------- Login ----------
-// login button
-$("loginBtn").onclick = async ()=>{
-  const email = $("loginEmail").value.trim();
-  const password = $("loginPassword").value.trim();
-  if(!email || !password) return alert("Enter email and password");
-
-  const { data, error } = await client.auth.signInWithPassword({ email, password });
-  if(error) return alert(error.message);
-
+/* ======== AUTH (login/signup) ======== */
+$('loginBtn').addEventListener('click', async ()=>{
+  const email = $('loginEmail').value.trim();
+  const password = $('loginPassword').value;
+  if(!email || !password) return alert("Enter email & password");
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if(error){ console.error("Login error:", error); alert("Login error: " + error.message); return; }
   await afterLogin(data.user);
-};
+});
 
+/* simple signup to make testing easier (creates auth user via anon key) */
+$('signupBtn').addEventListener('click', async ()=>{
+  const email = $('loginEmail').value.trim();
+  const password = $('loginPassword').value;
+  if(!email || !password) return alert("Enter email & password");
+  const { data, error } = await sb.auth.signUp({ email, password });
+  if(error){ console.error("Signup error:", error); alert("Signup error: " + error.message); return; }
+  alert("Signed up — check your email if confirmation is required. Then log in.");
+});
+
+/* after login: fetch username; prompt if missing */
 async function afterLogin(user){
-  me.email = user.email;
-
-  // fetch username
-  // lookup username by email
-  const { data: row, error } = await client.from("users").select("username").eq("email", me.email).maybeSingle();
-  if(error){ console.error(error); }
-
-  if(error) console.error(error);
-  if(!row || !row.username){
-    showSection("username");
-  } else {
-    me.username = row.username;
-    initApp();
-    // prompt username
-    $("authScreen").style.display = "none";
-    $("usernameScreen").style.display = "block";
-    return;
-  }
-  me.username = row.username;
-  startApp();
-}
-
-// ---------- Username creation ----------
-// save username
-$("saveUsernameBtn").onclick = async ()=>{
-  const u = $("usernameInput").value.trim();
-  if(!/^[a-zA-Z0-9_]{1,15}$/.test(u)) return alert("Use letters/numbers/underscore only, max 15.");
-  // ensure unique
-  const { data: exists } = await client.from("users").select("username").eq("username", u).maybeSingle();
-  if(exists) return alert("That username is taken.");
-
-  // upsert so repeat presses don't error
-  const { error } = await client.from("users").upsert({ email: me.email, username: u }, { onConflict: "email" });
-  // uniqueness check
-  const { data: exist } = await client.from("users").select("email").eq("username", u).maybeSingle();
-  if(exist) return alert("Username taken");
-  const { error } = await client.from("users").upsert({ email: me.email, username: u }, { onConflict:"email" });
-  if(error) return alert(error.message);
-
-  me.username = u;
-  initApp();
-  $("usernameScreen").style.display = "none";
-  startApp();
-};
-
-// ---------- App init ----------
-function initApp(){
-  $("meInfo").textContent = `${me.username} (${me.email})`;
-  showSection("app");
-  setRoomHeader("Global Chat", "GC");
-
-  // load lists and messages
-// start app UI
-function startApp(){
-  $("meInfo").textContent = `${me.username} — ${me.email}`;
-  $("authScreen").style.display = "none";
-  $("usernameScreen").style.display = "none";
-  $("app").style.display = "grid";
-  setRoomHeader("Global Chat","GC");
-  loadFriends();
-  loadRequests();
-  loadGlobalMessages();
-  subscribeGlobal();
-  // composer wiring
-  wireComposer();
-  // search
-  $("searchBox").addEventListener("input", debounce(searchUsers, 300));
-}
-
-// ---------- Room header ----------
-// header helper
-function setRoomHeader(title, initialsTxt){
-  $("roomTitle").textContent = title;
-  $("roomAvatar").textContent = initialsTxt;
-}
-
-// ---------- Composer (Enter to send on desktop; button for mobile) ----------
-// composer wiring (reliable Enter handler)
-function wireComposer(){
-  const send = async ()=> {
-    const txt = $("composerInput").value.trim();
-    if(!txt) return;
-
-    if(currentView.type === "global"){
-      const { error } = await client.from("messages").insert({
-        username: me.username, message: txt, sender_email: me.email
-      });
-      const { error } = await client.from("messages").insert({ username: me.username, message: txt, sender_email: me.email });
-      if(!error) $("composerInput").value = "";
+  try {
+    me.email = user.email;
+    // read username by email
+    const { data: row, error } = await sb.from('users').select('username').eq('email', me.email).maybeSingle();
+    if(error) console.error("username lookup error:", error);
+    if(!row || !row.username){
+      // prompt username
+      $('usernameField').value = '';
+      $('usernameError').style.display='none';
+      showUsername();
     } else {
-      const { error } = await client.from("dm_messages").insert({
-        sender_email: me.email, receiver_email: currentView.peerEmail, content: txt
-      });
-      const { error } = await client.from("dm_messages").insert({ sender_email: me.email, receiver_email: currentView.peerEmail, content: txt });
-      if(!error) $("composerInput").value = "";
+      me.username = row.username;
+      showApp();
+      startApp();
     }
-  };
-
-  $("composerInput").addEventListener("keydown",(e)=>{
-    // Desktop: Enter sends; Shift+Enter for newline if you ever switch to textarea
-  // keydown: Enter = send (desktop). Shift+Enter newline.
-  $("composerInput").addEventListener("keydown", (e)=>{
-    if(e.key === "Enter" && !isMobile()){
-      e.preventDefault(); send();
-      if(e.shiftKey) return; // allow newline if desired in future textarea
-      e.preventDefault();
-      send();
-    }
-  });
-  $("sendBtn").onclick = send; // mobile visible
-  // mobile send button
-  $("sendBtn").onclick = ()=> {
-    if(isMobile()) $("composerInput").focus(); // mobile: focus input first for keyboard
-    // send whether mobile or not — mobile users can tap Send
-    const ev = new Event('sendManual');
-    $("composerInput").dispatchEvent(ev);
-  };
-  // also handle manual send event
-  $("composerInput").addEventListener("sendManual", send);
+  } catch(err){
+    console.error("afterLogin error:", err);
+    alert("Error during login. See console.");
+  }
 }
 
-// ---------- Global chat ----------
-// GLOBAL messages
-async function loadGlobalMessages(){
-  const { data, error } = await client.from("messages").select("*").order("created_at",{ascending:true});
-  if(error) return console.error(error);
-  const box = $("messages"); box.innerHTML = "";
-  data.forEach(m=>appendBubble(box, m.username, m.sender_email === me.email, m.message));
-  data.forEach(m => appendBubble(box, m.username, m.sender_email === me.email, m.message));
-}
-
-function subscribeGlobal(){
-  client.channel("global-feed")
-    .on("postgres_changes", { event:"INSERT", schema:"public", table:"messages" }, payload=>{
-      if(currentView.type === "global"){
-        appendBubble($("messages"), payload.new.username, payload.new.sender_email === me.email, payload.new.message);
-      }
-    })
-    .subscribe();
-      if(currentView.type === "global") appendBubble($("messages"), payload.new.username, payload.new.sender_email === me.email, payload.new.message);
-    }).subscribe();
-}
-
-// ---------- DMs ----------
-// DMs open/toggle
-async function openDM(peerEmail, peerUsername){
-  if(currentView.type === "dm" && currentView.peerEmail === peerEmail){
-    // toggle back to global
-@@ -390,114 +271,68 @@ <h2 style="color:var(--accent-2)">Create your username</h2>
-    await loadGlobalMessages();
+/* save username first-time */
+$('saveUsername').addEventListener('click', async ()=>{
+  const u = $('usernameField').value.trim();
+  if(!/^[A-Za-z0-9_]{1,15}$/.test(u)){
+    $('usernameError').innerText = "Invalid username — letters, numbers, underscore; max 15.";
+    $('usernameError').style.display = 'block';
     return;
   }
+  // unique check
+  try {
+    const { data: exists } = await sb.from('users').select('email').eq('username', u).maybeSingle();
+    if(exists) { $('usernameError').innerText = "Username taken"; $('usernameError').style.display='block'; return; }
+    // upsert by email
+    const { error } = await sb.from('users').upsert({ email: me.email, username: u }, { onConflict: 'email' });
+    if(error){ console.error("upsert username error:", error); alert("Could not save username: " + error.message); return; }
+    me.username = u;
+    showApp();
+    startApp();
+  } catch(err){
+    console.error("saveUsername err:", err); alert("Error saving username.");
+  }
+});
 
-  currentView = { type:"dm", peerEmail, peerUsername };
-  setRoomHeader(peerUsername, initials(peerUsername));
+/* sign out */
+$('logoutBtn').addEventListener('click', async ()=>{
+  await sb.auth.signOut();
+  // clear UI
+  messagesDedup.clear();
+  $('messages').innerHTML = '';
+  showAuth();
+});
 
-  const { data, error } = await client
-    .from("dm_messages")
-  // load DM history
-  const { data, error } = await client.from("dm_messages")
-    .select("*")
-    .or(`and(sender_email.eq.${me.email},receiver_email.eq.${peerEmail}),and(sender_email.eq.${peerEmail},receiver_email.eq.${me.email})`)
-    .order("created_at",{ascending:true});
-
-  if(error){ console.error(error); return; }
-
-  if(error) return console.error(error);
-  const box = $("messages"); box.innerHTML = "";
-  data.forEach(m=>{
-    const mine = m.sender_email === me.email;
-    appendBubble(box, mine? me.username : peerUsername, mine, m.content);
-  });
-
-  // realtime for DM
-  data.forEach(m => appendBubble(box, (m.sender_email === me.email? me.username: peerUsername), m.sender_email === me.email, m.content));
-  // subscribe DM channel
-  subscribeDM(peerEmail, peerUsername);
+/* ================= APP START (after username exists) ================= */
+function startApp(){
+  $('meInfo').innerText = `${me.username} — ${me.email}`;
+  // load initial data
+  messagesDedup.clear();
+  loadGlobalMessages().catch(e=>console.error("loadGlobalMessages:",e));
+  subscribeGlobal(); // keep realtime listening
+  wireComposer();
+  wireSidebar();
+  loadFriends().catch(e=>console.error(e));
+  loadRequests().catch(e=>console.error(e));
 }
 
-let dmChannel = null;
+    async function loadFriends(){
+      const { data } = await client.from("friends").select("friend_email,friend_username").eq("user_email",me.email);
+      const box=$("friends"); box.innerHTML=""; (data||[]).forEach(f=>{
+        const item=document.createElement("div"); item.className="list-item";
+        item.innerHTML=`<div class="avatar">${initials(f.friend_username)}</div><div class="meta"><div class="name">${f.friend_username}</div></div>`;
+        item.onclick=()=>openDM(f.friend_email,f.friend_username);
+        box.appendChild(item);
+/* ========= message dedupe helper ========= */
+function messageKey(msg){
+  // use sender + text + created_at (if created_at missing, fallback to a timestamp)
+  return `${msg.sender_email||''}::${msg.message||msg.content||''}::${msg.created_at||msg.created_at}`;
+}
+
+/* ========= load + render global history ========= */
+async function loadGlobalMessages(){
+  try{
+    const { data, error } = await sb.from('messages').select('*').order('created_at',{ ascending:true });
+    if(error){ console.error("loadGlobalMessages error:", error); return; }
+    const container = $('messages');
+    container.innerHTML = '';
+    for(const m of (data||[])){
+      addMessageToUI(m);
+    }
+  } catch(err){
+    console.error("loadGlobalMessages exception:", err);
+  }
+}
+
+/* append message with dedupe */
+function addMessageToUI(m){
+  try{
+    const key = messageKey(m);
+    if(messagesDedup.has(key)) return; // already shown
+    messagesDedup.add(key);
+
+    const container = $('messages');
+    const div = document.createElement('div');
+    const mine = (m.sender_email === me.email);
+    div.className = 'bubble ' + (mine ? 'me' : 'them');
+
+    // Show username (or fallback email)
+    const displayName = (m.username || m.sender_email || 'Unknown');
+
+    if(!mine){
+      div.innerHTML = `<div class="from"><div class="avatar" style="width:26px;height:26px;font-size:.8rem">${escapeHtml(initials(displayName))}</div><div>${escapeHtml(displayName)}</div></div><div>${escapeHtml(m.message || m.content || '')}</div>`;
+    } else {
+      // mine: show message only
+      div.innerHTML = `<div>${escapeHtml(m.message || m.content || '')}</div>`;
+    }
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+  }catch(err){
+    console.error("addMessageToUI error:", err);
+  }
+}
+
+/* ========= realtime subscription for global messages ========= */
+function subscribeGlobal(){
+  try {
+    // remove previous if exists
+    if(globalChannel) { try { sb.removeChannel(globalChannel); } catch(e){}; globalChannel = null; messagesDedup.clear(); }
+
+    globalChannel = sb.channel('public:messages')
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'messages' }, payload => {
+        // payload.new contains the row
+        addMessageToUI(payload.new);
+      })
+      .subscribe(status => {
+        // subscription status logged to console
+        console.log("global channel status:", status);
+      });
+  } catch(err) {
+    console.error("subscribeGlobal error:", err);
+  }
+}
+
+/* ========= composer wiring & send message ========= */
+function wireComposer(){
+  // desktop: Enter sends; mobile uses button
+  const input = $('composerInput');
+  input.addEventListener('keydown', async (e) => {
+    if(e.key === 'Enter' && !isMobile()){
+      e.preventDefault();
+      await sendMessage();
+    }
+  });
+  $('sendMobileBtn').addEventListener('click', async ()=>{ await sendMessage(); });
+
+  // clear on focus bug
+}
+
+/* send message (global or DM) */
+async function sendMessage(){
+  const txt = $('composerInput').value.trim();
+  if(!txt) return;
+  try {
+    if(currentView.type === 'global'){
+      // insert into messages table
+      const payload = { username: me.username || me.email, message: txt, sender_email: me.email };
+      const { data, error } = await sb.from('messages').insert([payload]).select(); // select to get created_at returned
+      if(error){
+        console.error("insert global message error:", error);
+        alert("Failed to send message: " + (error.message || JSON.stringify(error)));
+        return;
+      }
+      // If DB returned the row(s), append now (subscription will also emit, dedupe prevents dup)
+      if(data && data[0]) addMessageToUI(data[0]);
+      $('composerInput').value = '';
+    } else if(currentView.type === 'dm' && currentView.peerEmail){
+      const payload = { sender_email: me.email, receiver_email: currentView.peerEmail, content: txt };
+      const { data, error } = await sb.from('dm_messages').insert([payload]).select();
+      if(error){
+        console.error("insert DM error:", error);
+        alert("Failed to send DM: " + (error.message || JSON.stringify(error)));
+        return;
+      }
+      if(data && data[0]) {
+        // if currently viewing this DM, show it
+        if(currentView.type === 'dm' && currentView.peerEmail === currentView.peerEmail) addMessageToUI({ sender_email: me.email, username: me.username, message: txt, created_at: data[0].created_at });
+      }
+      $('composerInput').value = '';
+    }
+  } catch(err){
+    console.error("sendMessage exception:", err); alert("Error sending message (see console).");
+  }
+}
+
+/* ========= FRIENDS / REQUESTS minimal implementation ========= */
+function wireSidebar(){
+  $('toggleAdd').addEventListener('click', ()=>{ $('addPopup').style.display = $('addPopup').style.display === 'block' ? 'none' : 'block'; $('reqPopup').style.display='none'; });
+  $('closeAdd').addEventListener('click', ()=> $('addPopup').style.display='none');
+  $('toggleReq').addEventListener('click', ()=>{ $('reqPopup').style.display = $('reqPopup').style.display === 'block' ? 'none' : 'block'; $('addPopup').style.display='none'; });
+  $('closeReq').addEventListener('click', ()=> $('reqPopup').style.display='none');
+
+    async function loadRequests(){
+      const { data } = await client.from("friend_requests").select("id,from_email,from_user:from_email(username)").eq("to_email",me.email);
+      const box=$("requests"); box.innerHTML=""; if(data&&data.length){ $("reqBadge").classList.remove("hidden"); $("reqBadge").textContent=data.length; } else $("reqBadge").classList.add("hidden");
+      (data||[]).forEach(r=>{
+        const item=document.createElement("div"); item.className="list-item";
+        item.innerHTML=`<div class="avatar">${initials(r.from_user.username)}</div><div class="meta"><div class="name">${r.from_user.username}</div></div><div style="margin-left:auto"><button class="btn success">✓</button><button class="btn danger">✕</button></div>`;
+        const [btnA,btnD]=item.querySelectorAll("button");
+        btnA.onclick=()=>acceptReq(r.id,r.from_email,r.from_user.username);
+        btnD.onclick=()=>declineReq(r.id);
+        box.appendChild(item);
+  $('addSearch').addEventListener('input', debounce(async ()=> {
+    const q = $('addSearch').value.trim();
+    const box = $('addResults'); box.innerHTML = '';
+    if(!q) return;
+    try {
+      const { data, error } = await sb.from('users').select('email,username').ilike('username', `%${q}%`).limit(20);
+      if(error){ console.error("search users error:", error); return; }
+      (data||[]).filter(u => u.email !== me.email).forEach(u=>{
+        const div = document.createElement('div'); div.className='list-item';
+        div.innerHTML = `<div class="avatar">${escapeHtml(initials(u.username))}</div><div class="meta"><div class="name">${escapeHtml(u.username)}</div><div class="muted">${escapeHtml(u.email)}</div></div><div style="margin-left:auto"><button class="btn primary">Add</button></div>`;
+        div.querySelector('button').addEventListener('click', ()=> sendFriendRequest(u.email));
+        box.appendChild(div);
+      });
+    }
+    async function acceptReq(id, fromEmail, fromUsername){
+      await client.from("friends").insert([{user_email:me.email,friend_email:fromEmail,friend_username:fromUsername},{user_email:fromEmail,friend_email:me.email,friend_username:me.username}]);
+      await client.from("friend_requests").delete().eq("id",id);
+      loadFriends(); loadRequests();
+    }
+    async function declineReq(id){ await client.from("friend_requests").delete().eq("id",id); loadRequests(); }
+    } catch(err){ console.error("searchUsers error:", err); }
+  }, 350));
+}
+
+    function appendBubble(box,username,isMe,text){
+      const b=document.createElement("div"); b.className=`bubble ${isMe?"me":"them"}`;
+      b.innerHTML=isMe?`${escapeHtml(text)}`:`<div class="from"><div class="avatar">${initials(username)}</div>${username}</div>${escapeHtml(text)}`;
+      box.appendChild(b); box.scrollTop=box.scrollHeight;
+    }
+    function debounce(fn,delay){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),delay); }; }
+  </script>
+/* send friend request (friends table with status) */
+async function sendFriendRequest(toEmail){
+  try {
+    // avoid duplicate requests / pairs
+    const { data: existing } = await sb.from('friends')
+      .select('id,status')
+      .or(`and(requester_email.eq.${me.email},addressee_email.eq.${toEmail}),and(requester_email.eq.${toEmail},addressee_email.eq.${me.email})`)
+      .maybeSingle();
+    if(existing){ alert("Request already exists (" + existing.status + ")"); return; }
+    const { error } = await sb.from('friends').insert([{ requester_email: me.email, addressee_email: toEmail, status: 'pending' }]);
+    if(error){ console.error("sendFriendRequest error:", error); alert("Failed to send request: " + error.message); return; }
+    alert("Friend request sent!");
+    loadRequests(); // refresh
+  } catch(err){ console.error("sendFriendRequest exception:", err); alert("Error sending request"); }
+}
+
+/* load incoming requests and badge */
+async function loadRequests(){
+  try {
+    const { data, error } = await sb.from('friends').select('id,requester_email').eq('addressee_email', me.email).eq('status','pending').order('created_at',{ascending:false});
+    if(error){ console.error("loadRequests error:", error); return; }
+    const box = $('reqList'); box.innerHTML = '';
+    const count = (data||[]).length;
+    if(count>0){ $('reqCount').style.display='inline-block'; $('reqCount').innerText = count; } else { $('reqCount').style.display='none'; }
+    for(const r of (data||[])){
+      const { data: u } = await sb.from('users').select('username').eq('email', r.requester_email).maybeSingle();
+      const name = u?.username || r.requester_email;
+      const div = document.createElement('div'); div.className='list-item';
+      div.innerHTML = `<div class="avatar">${escapeHtml(initials(name))}</div><div class="meta"><div class="name">${escapeHtml(name)}</div><div class="muted">wants to add you</div></div><div style="margin-left:auto"><button class="btn success">Accept</button><button class="btn danger">Decline</button></div>`;
+      const [acceptBtn, declineBtn] = div.querySelectorAll('button');
+      acceptBtn.addEventListener('click', ()=> respondRequest(r.id, 'accepted', r.requester_email, name));
+      declineBtn.addEventListener('click', ()=> respondRequest(r.id, 'declined'));
+      box.appendChild(div);
+    }
+  } catch(err){ console.error("loadRequests exception:", err); }
+}
+
+/* accept/decline request */
+async function respondRequest(id, status, requesterEmail, requesterUsername){
+  try {
+    const { error } = await sb.from('friends').update({ status }).eq('id', id);
+    if(error){ console.error("respondRequest error:", error); return; }
+    if(status === 'accepted'){
+      // create reciprocal accepted entries in friends for quick friend listing (optional approach)
+      // Some schemas create a single row with status 'accepted'; adapt as your DB expects.
+      // Here we keep the single row with status 'accepted' and loadFriends() will find accepted relations.
+    }
+    await loadRequests();
+    await loadFriends();
+  } catch(err){ console.error("respondRequest exception:", err); }
+}
+
+/* load friends list (accepted) */
+async function loadFriends(){
+  try {
+    const { data } = await sb.from('friends').select('requester_email,addressee_email,status').or(`requester_email.eq.${me.email},addressee_email.eq.${me.email}`).eq('status','accepted');
+    const peers = new Set();
+    (data||[]).forEach(r => {
+      const peer = (r.requester_email === me.email) ? r.addressee_email : r.requester_email;
+      peers.add(peer);
+    });
+    const box = $('friendsList'); box.innerHTML = '';
+    for(const email of peers){
+      const { data: u } = await sb.from('users').select('username').eq('email', email).maybeSingle();
+      const uname = u?.username || email;
+      const div = document.createElement('div'); div.className='list-item';
+      div.innerHTML = `<div class="avatar">${escapeHtml(initials(uname))}</div><div class="meta"><div class="name">${escapeHtml(uname)}</div><div class="muted">${escapeHtml(email)}</div></div>`;
+      div.addEventListener('click', ()=> openDM(email, uname));
+      box.appendChild(div);
+    }
+  } catch(err){ console.error("loadFriends error:", err); }
+}
+
+/* open DM with toggling — click again to return to global */
+async function openDM(peerEmail, peerUsername){
+  try {
+    if(currentView.type === 'dm' && currentView.peerEmail === peerEmail){
+      // toggle back to global
+      currentView = { type: 'global', peerEmail: null, peerUsername: null };
+      $('roomTitle').innerText = 'Global Chat';
+      $('roomAvatar').innerText = 'GC';
+      $('messages').innerHTML = '';
+      messagesDedup.clear();
+      await loadGlobalMessages();
+      subscribeGlobal();
+      return;
+    }
+    // set DM view
+    currentView = { type: 'dm', peerEmail, peerUsername };
+    $('roomTitle').innerText = peerUsername;
+    $('roomAvatar').innerText = initials(peerUsername);
+    // load history
+    const { data, error } = await sb.from('dm_messages')
+      .select('*')
+      .or(`and(sender_email.eq.${me.email},receiver_email.eq.${peerEmail}),and(sender_email.eq.${peerEmail},receiver_email.eq.${me.email})`)
+      .order('created_at',{ ascending:true });
+    if(error){ console.error("load dm history error:", error); return; }
+    $('messages').innerHTML = ''; messagesDedup.clear();
+    (data||[]).forEach(m => {
+      // m.content stores text
+      addMessageToUI({ username: (m.sender_email === me.email ? me.username : peerUsername), message: m.content, sender_email: m.sender_email, created_at: m.created_at });
+    });
+    // subscribe DM channel
+    subscribeDM(peerEmail, peerUsername);
+  } catch(err){ console.error("openDM error:", err); }
+}
+
+/* subscribe to DM messages */
 function subscribeDM(peerEmail, peerUsername){
-  if(dmChannel) client.removeChannel(dmChannel);
-  dmChannel = client.channel(`dm-${me.email}-${peerEmail}`)
-    .on("postgres_changes",
-      { event:"INSERT", schema:"public", table:"dm_messages" },
-      (payload)=>{
+  try {
+    if(dmChannel) { try { sb.removeChannel(dmChannel); } catch(e){}; dmChannel = null; }
+    dmChannel = sb.channel(`dm-${me.email}-${peerEmail}`)
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'dm_messages' }, payload => {
         const m = payload.new;
-        const involved = (m.sender_email===me.email && m.receiver_email===peerEmail) ||
-                         (m.sender_email===peerEmail && m.receiver_email===me.email);
-        if(currentView.type==="dm" && involved){
-          const mine = m.sender_email === me.email;
-          appendBubble($("messages"), mine? me.username : peerUsername, mine, m.content);
+        const involved = (m.sender_email === me.email && m.receiver_email === peerEmail) || (m.sender_email === peerEmail && m.receiver_email === me.email);
+        if(currentView.type === 'dm' && involved){
+          addMessageToUI({ username: m.sender_email === me.email ? me.username : peerUsername, message: m.content, sender_email: m.sender_email, created_at: m.created_at });
         }
       })
-    .subscribe();
-    .on("postgres_changes", { event:"INSERT", schema:"public", table:"dm_messages" }, payload=>{
-      const m = payload.new;
-      const involved = (m.sender_email===me.email && m.receiver_email===peerEmail) || (m.sender_email===peerEmail && m.receiver_email===me.email);
-      if(currentView.type==="dm" && involved){
-        appendBubble($("messages"), (m.sender_email===me.email? me.username : peerUsername), m.sender_email===me.email, m.content);
-      }
-    }).subscribe();
+      .subscribe();
+  } catch(err){ console.error("subscribeDM error:", err); }
 }
 
-// ---------- Friend search / requests / list ----------
-// friends: search, requests, list
-async function searchUsers(){
-  const q = $("searchBox").value.trim();
-  const box = $("searchResults");
-  if(!q){ box.innerHTML=""; return; }
-  const { data, error } = await client.from("users")
-    .select("email, username")
-    .ilike("username", `%${q}%`)
-    .limit(20);
-  if(error){ console.error(error); return; }
+/* ======= utilities ======= */
+function debounce(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
 
-  box.innerHTML = "";
-  data
-    .filter(u=>u.email!==me.email)
-    .forEach(u=>{
-      const item = document.createElement("div");
-      item.className = "list-item";
-      item.innerHTML = `
-        <div class="avatar">${initials(u.username)}</div>
-        <div class="meta"><div class="name">${u.username}</div><div class="muted">${u.email}</div></div>
-        <div style="margin-left:auto" class="row">
-          <button class="btn primary">Add</button>
-        </div>`;
-      item.querySelector("button").onclick = ()=> sendFriendRequest(u.email);
-      box.appendChild(item);
+/* ========== initial UI wiring ========== */
+$('toggleAdd').addEventListener('click', ()=>{ const d = $('addPopup'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; $('reqPopup').style.display='none'; });
+$('closeAdd').addEventListener('click', ()=> $('addPopup').style.display='none');
+$('toggleReq').addEventListener('click', ()=>{ const d = $('reqPopup'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; $('addPopup').style.display='none'; });
+$('closeReq').addEventListener('click', ()=> $('reqPopup').style.display='none');
+
+/* load requests / friends when popups open */
+$('toggleReq').addEventListener('click', ()=> loadRequests());
+$('toggleAdd').addEventListener('click', ()=> { $('addSearch').value = ''; $('addResults').innerHTML=''; });
+
+/* initial search box (sidebar) - live search people */
+$('searchBox').addEventListener('input', debounce(async ()=>{
+  const q = $('searchBox').value.trim();
+  const box = $('friendsList');
+  if(!q){ loadFriends(); return; } // restore full friends if no query
+  try {
+    const { data } = await sb.from('users').select('email,username').ilike('username', `%${q}%`).limit(40);
+    box.innerHTML = '';
+    (data||[]).filter(u=>u.email !== me.email).forEach(u=>{
+      const el = document.createElement('div'); el.className='list-item';
+      el.innerHTML = `<div class="avatar">${escapeHtml(initials(u.username))}</div><div class="meta"><div class="name">${escapeHtml(u.username)}</div><div class="muted">${escapeHtml(u.email)}</div></div><div style="margin-left:auto"><button class="btn primary">Add</button></div>`;
+      el.querySelector('button').addEventListener('click', ()=> sendFriendRequest(u.email));
+      box.appendChild(el);
     });
-  const box = $("searchResults"); box.innerHTML = "";
+  } catch(err){ console.error("sidebar search error:", err); }
+}, 400));
+
+/* add popup inner search reuses addSearch input - clicking Add sends friend request */
+$('addSearch').addEventListener('input', debounce(async ()=>{
+  const q = $('addSearch').value.trim(); const box = $('addResults'); box.innerHTML='';
   if(!q) return;
-  const { data, error } = await client.from("users").select("email,username").ilike("username", `%${q}%`).limit(20);
-  if(error) return console.error(error);
-  data.filter(u=>u.email !== me.email).forEach(u=>{
-    const el = document.createElement("div"); el.className="list-item";
-    el.innerHTML = `<div class="avatar">${initials(u.username)}</div><div class="meta"><div class="name">${u.username}</div><div class="muted">${u.email}</div></div><div style="margin-left:auto" class="row"><button class="btn primary">Add</button></div>`;
-    el.querySelector("button").onclick = ()=> sendFriendRequest(u.email);
-    box.appendChild(el);
-  });
-}
+  try {
+    const { data } = await sb.from('users').select('email,username').ilike('username', `%${q}%`).limit(40);
+    (data||[]).filter(u=>u.email !== me.email).forEach(u=>{
+      const el = document.createElement('div'); el.className='list-item';
+      el.innerHTML = `<div class="avatar">${escapeHtml(initials(u.username))}</div><div class="meta"><div class="name">${escapeHtml(u.username)}</div><div class="muted">${escapeHtml(u.email)}</div></div><div style="margin-left:auto"><button class="btn primary">Add</button></div>`;
+      el.querySelector('button').addEventListener('click', ()=> sendFriendRequest(u.email));
+      box.appendChild(el);
+    });
+  } catch(err){ console.error("add popup search error:", err); }
+}, 350));
 
-async function sendFriendRequest(toEmail){
-  // prevent duplicates both directions
-  // check duplicate both ways
-  const { data: existing } = await client.from("friends")
-    .select("id,status")
-    .or(`and(requester_email.eq.${me.email},addressee_email.eq.${toEmail}),and(requester_email.eq.${toEmail},addressee_email.eq.${me.email})`)
-    .maybeSingle();
+/* show error instructions: if sending still fails */
+console.log("Texter UI loaded. If global sends fail: 1) open Console (F12) 2) check network/auth errors 3) ensure 'messages' table exists and RLS permits inserts for authenticated users.");
 
-  if(existing){
-    alert(`Already ${existing.status}`);
-    return;
-  }
-
-  const { error } = await client.from("friends").insert({
-    requester_email: me.email, addressee_email: toEmail, status: "pending"
-  });
-  if(error) alert(error.message); else alert("Request sent!");
-  if(existing) return alert(`Already ${existing.status}`);
-  const { error } = await client.from("friends").insert({ requester_email: me.email, addressee_email: toEmail, status: "pending" });
-  if(error) return alert(error.message);
-  alert("Request sent");
-  loadRequests();
-}
-
-async function loadRequests(){
-  const box = $("requests"); box.innerHTML = "";
-  const { data, error } = await client.from("friends")
-    .select("id, requester_email")
-    .eq("addressee_email", me.email)
-    .eq("status","pending")
-    .order("created_at",{ascending:false});
-  const { data, error } = await client.from("friends").select("id,requester_email").eq("addressee_email", me.email).eq("status","pending").order("created_at",{ascending:false});
-  if(error) return console.error(error);
-
-  // fetch usernames for requesters
-  for(const r of data){
-    const { data: u } = await client.from("users").select("username").eq("email", r.requester_email).maybeSingle();
-    const name = u?.username || r.requester_email;
-    const row = document.createElement("div");
-    row.className = "list-item";
-    row.innerHTML = `
-      <div class="avatar">${initials(name)}</div>
-      <div class="meta"><div class="name">${name}</div><div class="muted">wants to add you</div></div>
-      <div style="margin-left:auto" class="row">
-        <button class="btn success">Accept</button>
-        <button class="btn danger">Decline</button>
-      </div>`;
-    const row = document.createElement("div"); row.className="list-item";
-    row.innerHTML = `<div class="avatar">${initials(name)}</div><div class="meta"><div class="name">${name}</div><div class="muted">wants to add you</div></div><div style="margin-left:auto" class="row"><button class="btn success">Accept</button><button class="btn danger">Decline</button></div>`;
-    row.querySelector(".success").onclick = ()=> respondRequest(r.id,"accepted");
-    row.querySelector(".danger").onclick = ()=> respondRequest(r.id,"declined");
-    box.appendChild(row);
-@@ -507,61 +342,49 @@ <h2 style="color:var(--accent-2)">Create your username</h2>
-async function respondRequest(id, status){
-  const { error } = await client.from("friends").update({ status }).eq("id", id);
-  if(error) return alert(error.message);
-  await loadRequests();
-  await loadFriends();
-  loadRequests();
-  loadFriends();
-}
-
-async function loadFriends(){
-  const box = $("friends"); box.innerHTML = "";
-
-  // accepted where I'm requester
-  const { data: a } = await client.from("friends")
-    .select("requester_email, addressee_email, status")
-    .or(`requester_email.eq.${me.email},addressee_email.eq.${me.email}`)
-    .eq("status","accepted");
-
-  // accepted either side
-  const { data } = await client.from("friends").select("requester_email,addressee_email,status").or(`requester_email.eq.${me.email},addressee_email.eq.${me.email}`).eq("status","accepted");
-  const peerEmails = new Set();
-  (a||[]).forEach(r=>{
-    const peer = r.requester_email===me.email ? r.addressee_email : r.requester_email;
-  (data||[]).forEach(r => {
-    const peer = r.requester_email === me.email ? r.addressee_email : r.requester_email;
-    peerEmails.add(peer);
-  });
-
-  for(const email of peerEmails){
-    const { data: u } = await client.from("users").select("username").eq("email", email).maybeSingle();
-    const name = u?.username || email;
-    const item = document.createElement("div");
-    item.className = "list-item";
-    item.innerHTML = `
-      <div class="avatar">${initials(name)}</div>
-      <div class="meta"><div class="name">${name}</div><div class="muted">${email}</div></div>`;
-    const item = document.createElement("div"); item.className="list-item";
-    item.innerHTML = `<div class="avatar">${initials(name)}</div><div class="meta"><div class="name">${name}</div><div class="muted">${email}</div></div>`;
-    item.onclick = ()=> openDM(email, name);
-    box.appendChild(item);
-  }
-}
-
-// ---------- Message rendering ----------
-// rendering bubbles
-function appendBubble(container, fromName, mine, text){
-  const wrap = document.createElement("div");
-  wrap.className = `bubble ${mine? "me":"them"}`;
-  wrap.innerHTML = `
-    <div class="from">
-      <div class="avatar" style="width:26px;height:26px;font-size:.75rem;">${initials(fromName)}</div>
-      <div>${fromName}</div>
-    </div>
-    <div>${escapeHtml(text)}</div>
-  `;
-  wrap.innerHTML = `<div class="from"><div class="avatar" style="width:26px;height:26px;font-size:.75rem">${initials(fromName)}</div><div>${fromName}</div></div><div>${escapeHtml(text)}</div>`;
-  container.appendChild(wrap);
-  container.scrollTop = container.scrollHeight;
-}
-function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
-
-function escapeHtml(s){
-  return s.replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-}
-// utilities
-function debounce(fn,ms){ let t; return (...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms)} }
-
-// ---------- Utilities ----------
-function debounce(fn, ms){
-  let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); };
-}
-// small boot helpers to load global data
-async function loadGlobalMessages(){ const { data, error } = await client.from("messages").select("*").order("created_at",{ascending:true}); if(error) return console.error(error); $("messages").innerHTML = ""; data.forEach(m=>appendBubble($("messages"), m.username, m.sender_email===me.email, m.message)); }
-
-// export for debugging (optional)
-window._texter = { client, me };
-
-// End of script
+/* END script */
 </script>
 </body>
 </html>
