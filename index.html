@@ -10,10 +10,8 @@ body { margin:0; font-family:'Segoe UI',sans-serif; background:#0a0f1a; color:#f
 #sidebar h2 { padding:1rem; margin:0; border-bottom:1px solid #1c2335; }
 #channels { flex:1; overflow-y:auto; }
 .channel { display:flex; align-items:center; padding:0.5rem 1rem; cursor:pointer; border-bottom:1px solid #1c2335; transition:background 0.2s; }
-.channel:hover { background:#141a2c; }
-.channel.active { background:#141a2c; font-weight:bold; }
+.channel:hover, .channel.active { background:#141a2c; font-weight:bold; }
 .profile-circle { width:32px; height:32px; border-radius:50%; background:#0b78e3; display:flex; align-items:center; justify-content:center; margin-right:0.5rem; font-weight:bold; flex-shrink:0; }
-.online-dot { width:10px; height:10px; border-radius:50%; background:green; margin-right:5px; }
 #main { flex:1; display:flex; flex-direction:column; }
 #messages { flex:1; padding:1rem; overflow-y:auto; display:flex; flex-direction:column; gap:0.3rem; }
 .message { padding:0.6rem 1rem; border-radius:15px; max-width:65%; word-break:break-word; }
@@ -57,8 +55,8 @@ body { margin:0; font-family:'Segoe UI',sans-serif; background:#0a0f1a; color:#f
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const supabaseUrl = 'https://azpgwbxillscpwrraprl.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6cGd3YnhpbGxzY3B3cnJhcHJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg1MjQsImV4cCI6MjA3MjYzNDUyNH0.h7ZDxtH4pB3K5IzRB9goLJ1ldrY6EGf7CWT-ELGQ0i0';
-const supabase = Supabase.createClient(supabaseUrl, supabaseKey);
+const supabaseKey = 'YOUR_SUPABASE_KEY';
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 document.addEventListener('DOMContentLoaded', () => {
   let currentUser = null;
@@ -72,12 +70,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const codeInput = document.getElementById('codeInput');
   const loginBtn = document.getElementById('loginBtn');
 
-  function appendMessage(msg,type){
+  const displayedMessages = new Set();
+
+  function appendMessage(msg, type){
+    const id = msg.id || msg.created_at + msg.username || msg.sender;
+    if(displayedMessages.has(id)) return; 
+    displayedMessages.add(id);
     const div = document.createElement('div');
-    div.className = 'message '+type;
+    div.className = 'message ' + type;
     div.innerHTML = `<strong>${msg.username||msg.sender}</strong>: ${msg.message} <span class="timestamp">${new Date(msg.created_at).toLocaleTimeString()}</span>`;
     messagesEl.appendChild(div);
-    div.scrollIntoView();
+    messagesEl.scrollTop = messagesEl.scrollHeight;
   }
 
   async function loginWithCode(code){
@@ -119,12 +122,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if(user.username===currentUser.username) return;
       const div = document.createElement('div');
       div.className='channel';
-      const initials = user.username[0].toUpperCase();
-      div.innerHTML=`<div class="profile-circle">${initials}</div>${user.username}`;
+      div.innerHTML=`<div class="profile-circle">${user.username[0].toUpperCase()}</div>${user.username}`;
       div.onclick=()=>{ currentChannel=user.username; setActiveChannel(div); loadMessages(); }
       channelsEl.appendChild(div);
     });
-    channelsEl.style.overflowY='auto';
   }
 
   function setActiveChannel(activeDiv){
@@ -136,6 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function loadMessages(){
     messagesEl.innerHTML='';
+    displayedMessages.clear();
     let query;
     if(currentChannel==='global'){
       query = supabase.from('global_messages').select('*').order('created_at',{ascending:true});
@@ -164,40 +166,43 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   sendBtn.onclick=sendMessage;
-  messageInput.addEventListener('keypress',e=>{ if(e.key==='Enter') sendMessage(); });
+  messageInput.addEventListener('keypress', e=>{ if(e.key==='Enter') sendMessage(); });
 
   function subscribeMessages(){
+    // Global
     supabase.channel('global')
-      .on('postgres_changes',{event:'INSERT',schema:'public',table:'global_messages'},payload=>{
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'global_messages'}, payload=>{
         if(currentChannel==='global' && payload.new.username!==currentUser.username)
           appendMessage(payload.new,'other');
       }).subscribe();
 
+    // Private
     supabase.channel('private')
-      .on('postgres_changes',{event:'INSERT',schema:'public',table:'private_messages'},payload=>{
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'private_messages'}, payload=>{
         const m = payload.new;
-        const isRelevant=(m.sender===currentUser.username && m.recipient===currentChannel)||(m.recipient===currentUser.username && m.sender===currentChannel);
-        if(isRelevant) appendMessage({username:m.sender,message:m.message,created_at:m.created_at}, m.sender===currentUser.username?'self':'other');
+        const relevant = (m.sender===currentUser.username && m.recipient===currentChannel) || 
+                         (m.sender===currentChannel && m.recipient===currentUser.username);
+        if(relevant) appendMessage({username:m.sender,message:m.message,created_at:m.created_at}, m.sender===currentUser.username?'self':'other');
       }).subscribe();
   }
 
   let typingTimeout;
-  messageInput.addEventListener('input',async ()=>{
+  messageInput.addEventListener('input', async ()=>{
     if(!currentUser) return;
     const channel=currentChannel==='global'?'global':currentChannel;
     await supabase.from('typing_status').upsert([{username:currentUser.username,channel,is_typing:true,updated_at:new Date().toISOString()}]);
     clearTimeout(typingTimeout);
     typingTimeout=setTimeout(async ()=>{
       await supabase.from('typing_status').upsert([{username:currentUser.username,channel,is_typing:false,updated_at:new Date().toISOString()}]);
-    },2000);
+    }, 2000);
   });
 
   async function subscribeTyping(){
     supabase.channel('typing')
-      .on('postgres_changes',{event:'UPDATE',schema:'public',table:'typing_status'},payload=>{
-        const t=payload.new;
-        if(t.channel!==currentChannel || t.username===currentUser.username) return;
-        typingIndicator.textContent = t.is_typing?`${t.username} is typing...`:'';
+      .on('postgres_changes',{event:'UPDATE',schema:'public',table:'typing_status'}, payload=>{
+        const t = payload.new;
+        if(t.channel !== currentChannel || t.username === currentUser.username) return;
+        typingIndicator.textContent = t.is_typing ? `${t.username} is typing...` : '';
       }).subscribe();
   }
 
