@@ -5,45 +5,49 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dark Chat App</title>
 <style>
-  body { margin:0; font-family:sans-serif; background:#0b0f1a; color:#fff; }
-  header { background:#101426; padding:1rem; display:flex; justify-content:space-between; align-items:center; }
-  main { display:flex; height:90vh; }
-  #friends { width:250px; background:#141a2c; padding:1rem; overflow-y:auto; display:flex; flex-direction:column; }
-  #friendSearch { margin-bottom:1rem; }
-  #friendSearch input { width:100%; padding:0.5rem; border-radius:4px; border:none; }
-  #chat { flex:1; display:flex; flex-direction:column; background:#0d1326; }
-  #chatHeader { display:flex; justify-content:space-between; align-items:center; padding:0.5rem 1rem; background:#101426; }
-  #backBtn { display:none; cursor:pointer; color:#0b78e3; font-weight:bold; }
-  #messages { flex:1; padding:1rem; overflow-y:auto; }
-  #input { display:flex; padding:0.5rem; background:#101426; }
-  #input input { flex:1; padding:0.5rem; border:none; border-radius:4px 0 0 4px; }
-  #input button { background:#0b78e3; color:#fff; border-radius:0 4px 4px 0; border:none; }
-  .message { margin-bottom:0.5rem; padding:0.5rem; border-radius:10px; max-width:60%; display:inline-block; word-break:break-word; }
-  .message.self { background:#0b78e3; color:#fff; align-self:flex-end; }
-  .message.other { background:#1c2335; color:#fff; align-self:flex-start; }
-  .timestamp { font-size:0.7rem; color:#7a7a7a; margin-top:2px; display:block; }
-  .friend { padding:0.5rem; border-bottom:1px solid #1c2335; cursor:pointer; display:flex; justify-content:space-between; }
+  body { margin:0; font-family: 'Segoe UI', sans-serif; background:#0a0f1a; color:#fff; }
+  header { background:#0f1524; padding:1rem; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 5px rgba(0,0,0,0.5);}
+  header h1 { margin:0; font-size:1.5rem; }
+  header button { background:#0b78e3; border:none; padding:0.5rem 1rem; border-radius:5px; cursor:pointer; color:#fff; font-weight:bold; }
+  main { display:flex; height:calc(100vh - 70px); }
+  #friends { width:280px; background:#11172c; padding:1rem; display:flex; flex-direction:column; overflow-y:auto; border-right:1px solid #1c2335; }
+  #friendSearch input { width:100%; padding:0.5rem; border-radius:8px; border:none; margin-bottom:1rem; background:#141a2c; color:#fff; }
+  #friendList { flex:1; overflow-y:auto; }
+  .friend { padding:0.6rem; margin-bottom:0.4rem; border-radius:8px; cursor:pointer; background:#141a2c; display:flex; justify-content:space-between; align-items:center; transition:0.2s; }
   .friend:hover { background:#1c2335; }
-  #typingIndicator { font-size:0.9rem; color:#7a7a7a; margin-bottom:0.5rem; }
-  /* Login/Signup modal */
-  #authModal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); display:flex; align-items:center; justify-content:center; z-index:10; }
-  #authBox { background:#101426; padding:2rem; border-radius:8px; width:300px; display:flex; flex-direction:column; }
-  #authBox input { margin-bottom:1rem; padding:0.5rem; border-radius:4px; border:none; }
-  #authBox button { padding:0.5rem; border:none; border-radius:4px; background:#0b78e3; color:#fff; cursor:pointer; margin-top:0.5rem; }
-  #toggleAuth { margin-top:1rem; text-align:center; color:#0b78e3; cursor:pointer; }
+  #addFriendBtn { margin-top:0.5rem; padding:0.5rem; border:none; border-radius:8px; background:#0b78e3; cursor:pointer; font-weight:bold; }
+  #chat { flex:1; display:flex; flex-direction:column; background:#0d1326; }
+  #chatHeader { padding:0.8rem 1rem; background:#101426; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 5px rgba(0,0,0,0.4); }
+  #backBtn { cursor:pointer; color:#0b78e3; font-weight:bold; display:none; }
+  #chatTitle { font-size:1.2rem; font-weight:bold; }
+  #messages { flex:1; padding:1rem; overflow-y:auto; display:flex; flex-direction:column; gap:0.3rem; }
+  .message { padding:0.6rem 1rem; border-radius:15px; max-width:65%; word-break:break-word; position:relative; }
+  .message.self { background:#0b78e3; align-self:flex-end; color:#fff; }
+  .message.other { background:#1c2335; align-self:flex-start; color:#fff; }
+  .timestamp { font-size:0.65rem; color:#7a7a7a; position:absolute; bottom:-16px; right:8px; }
+  #typingIndicator { font-size:0.85rem; color:#7a7a7a; margin-left:1rem; margin-bottom:0.5rem; }
+  #input { display:flex; padding:0.5rem 1rem; background:#101426; border-top:1px solid #1c2335; }
+  #input input { flex:1; padding:0.6rem 1rem; border-radius:20px 0 0 20px; border:none; background:#141a2c; color:#fff; }
+  #input button { padding:0.6rem 1.2rem; border:none; border-radius:0 20px 20px 0; background:#0b78e3; color:#fff; cursor:pointer; font-weight:bold; }
+  /* Auth Modal */
+  #authModal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:flex; align-items:center; justify-content:center; z-index:10; }
+  #authBox { background:#101426; padding:2rem; border-radius:15px; width:320px; display:flex; flex-direction:column; box-shadow:0 5px 20px rgba(0,0,0,0.5);}
+  #authBox input { margin-bottom:1rem; padding:0.6rem; border-radius:8px; border:none; background:#141a2c; color:#fff; }
+  #authBox button { padding:0.6rem; border:none; border-radius:8px; background:#0b78e3; color:#fff; font-weight:bold; cursor:pointer; margin-top:0.5rem; }
+  #toggleAuth { margin-top:1rem; text-align:center; color:#0b78e3; cursor:pointer; font-size:0.9rem; }
 </style>
 </head>
 <body>
 
 <header>
-  <div>Dark Chat</div>
+  <h1>Dark Chat</h1>
   <button id="logout-btn" style="display:none;">Logout</button>
 </header>
 
 <main>
   <div id="friends">
     <div id="friendSearch">
-      <input type="text" id="searchInput" placeholder="Search friends by name/email">
+      <input type="text" id="searchInput" placeholder="Search by name/email">
     </div>
     <div id="friendList"></div>
     <button id="addFriendBtn">Add Friend</button>
@@ -81,10 +85,9 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 let currentUser = null;
-let activeChat = null; // null = global
+let activeChat = null;
 let typingTimeout;
 
-// ----------------- AUTH -----------------
 const authModal = document.getElementById('authModal');
 const authTitle = document.getElementById('authTitle');
 const authUsername = document.getElementById('authUsername');
@@ -93,6 +96,7 @@ const toggleAuth = document.getElementById('toggleAuth');
 
 let isLogin = true;
 
+// Toggle Login/Signup
 toggleAuth.onclick = () => {
   isLogin = !isLogin;
   authTitle.textContent = isLogin ? 'Login' : 'Sign Up';
@@ -101,32 +105,38 @@ toggleAuth.onclick = () => {
   toggleAuth.textContent = isLogin ? "Don't have an account? Sign Up" : "Already have an account? Login";
 };
 
+// Sign Up / Login Handler
 authBtn.onclick = async () => {
   const email = document.getElementById('authEmail').value;
   const password = document.getElementById('authPassword').value;
   const username = document.getElementById('authUsername').value;
 
+  if(!email || !password || (!isLogin && !username)) return alert('Please fill all fields');
+
   if(isLogin){
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if(error) return alert(error.message);
     currentUser = data.user;
-    authModal.style.display = 'none';
-    document.getElementById('logout-btn').style.display = 'inline';
+    authModal.style.display='none';
+    document.getElementById('logout-btn').style.display='inline';
     initApp();
   } else {
     const { data, error } = await supabase.auth.signUp({ email, password });
     if(error) return alert(error.message);
-    await supabase.from('users').insert([{ id: data.user.id, username }]);
-    alert('Signed up! Please login.');
+    if(!data.user) return alert('Sign up failed');
+    const { error: insertError } = await supabase.from('users').insert([{ id: data.user.id, username }]);
+    if(insertError) return alert('Failed to save username: ' + insertError.message);
+    alert('Signed up! You can now log in.');
   }
 };
 
+// Logout
 document.getElementById('logout-btn').onclick = async () => {
   await supabase.auth.signOut();
   location.reload();
 };
 
-// ----------------- INITIALIZE APP -----------------
+// ----------------- APP INITIALIZATION -----------------
 async function initApp(){
   loadFriends();
   loadMessages();
@@ -134,13 +144,14 @@ async function initApp(){
   subscribeTyping();
 }
 
-// ----------------- FRIEND SYSTEM -----------------
+// ----------------- FRIENDS -----------------
 const friendListEl = document.getElementById('friendList');
 const searchInput = document.getElementById('searchInput');
+
 document.getElementById('addFriendBtn').onclick = async () => {
-  const emailOrUsername = prompt('Enter friend email or username:');
-  if(!emailOrUsername) return;
-  const { data: user } = await supabase.from('users').select('id').or(`email.eq.${emailOrUsername},username.eq.${emailOrUsername}`).single();
+  const input = prompt('Enter friend username or email:');
+  if(!input) return;
+  const { data:user } = await supabase.from('users').select('id').or(`username.eq.${input},email.eq.${input}`).single();
   if(!user) return alert('User not found');
   await supabase.from('friends').insert([{ user_id: currentUser.id, friend_id: user.id, status:'pending' }]);
   loadFriends();
@@ -150,14 +161,14 @@ searchInput.addEventListener('input', loadFriends);
 
 async function loadFriends(){
   const { data: friendsData } = await supabase.from('friends').select('*,users!inner(username,email)').or(`user_id.eq.${currentUser.id},friend_id.eq.${currentUser.id}`);
-  friendListEl.innerHTML = '';
+  friendListEl.innerHTML='';
   friendsData.forEach(f=>{
     const friendId = f.user_id === currentUser.id ? f.friend_id : f.user_id;
     const friendName = f.users.username;
     if(searchInput.value && !friendName.toLowerCase().includes(searchInput.value.toLowerCase()) && !f.users.email.includes(searchInput.value)) return;
     const div = document.createElement('div');
-    div.className = 'friend';
-    div.textContent = friendName + (f.status==='pending' && f.user_id!==currentUser.id ? ' (Accept)' : '');
+    div.className='friend';
+    div.textContent=f.status==='pending' && f.user_id!==currentUser.id ? `${friendName} (Accept)` : friendName;
     div.onclick = async ()=>{
       if(f.status==='pending' && f.user_id!==currentUser.id){
         await supabase.from('friends').update({status:'accepted'}).eq('id',f.id);
@@ -178,7 +189,7 @@ async function loadFriends(){
   });
 }
 
-// ----------------- BACK TO GLOBAL CHAT -----------------
+// Back Button
 document.getElementById('backBtn').onclick = () => {
   activeChat=null;
   document.getElementById('chatTitle').textContent='Global Chat';
@@ -193,17 +204,19 @@ async function loadMessages(){
   if(!activeChat){
     const { data: msgs } = await supabase.from('public_messages').select('*,users!inner(username)').order('created_at',{ascending:true});
     msgs.forEach(m=>{
-      const div = document.createElement('div');
-      div.className='message ' + (m.sender_id===currentUser.id?'self':'other');
+      const div=document.createElement('div');
+      div.className='message '+(m.sender_id===currentUser.id?'self':'other');
       div.innerHTML=`${m.users.username}: ${m.message}<span class="timestamp">${new Date(m.created_at).toLocaleTimeString()}</span>`;
       messagesEl.appendChild(div);
       div.scrollIntoView();
     });
   } else {
-    const { data: msgs } = await supabase.from('messages').select('*,users!inner(username)').or(`(sender_id.eq.${currentUser.id},receiver_id.eq.${activeChat}),(sender_id.eq.${activeChat},receiver_id.eq.${currentUser.id})`).order('created_at',{ascending:true});
+    const { data: msgs } = await supabase.from('messages').select('*,users!inner(username)')
+      .or(`(sender_id.eq.${currentUser.id},receiver_id.eq.${activeChat}),(sender_id.eq.${activeChat},receiver_id.eq.${currentUser.id})`)
+      .order('created_at',{ascending:true});
     msgs.forEach(m=>{
-      const div = document.createElement('div');
-      div.className='message ' + (m.sender_id===currentUser.id?'self':'other');
+      const div=document.createElement('div');
+      div.className='message '+(m.sender_id===currentUser.id?'self':'other');
       div.innerHTML=`${m.users.username}: ${m.message}<span class="timestamp">${new Date(m.created_at).toLocaleTimeString()}</span>`;
       messagesEl.appendChild(div);
       div.scrollIntoView();
@@ -211,8 +224,8 @@ async function loadMessages(){
   }
 }
 
-// ----------------- SEND MESSAGE -----------------
-document.getElementById('sendBtn').onclick = async () => {
+// Send message
+document.getElementById('sendBtn').onclick=async()=>{
   const input=document.getElementById('messageInput');
   if(!input.value) return;
   if(!activeChat){
@@ -264,7 +277,7 @@ async function subscribeTyping(){
     }).subscribe();
 }
 
-// ----------------- CHECK AUTH STATE -----------------
+// Check existing session
 supabase.auth.getSession().then(({ data })=>{
   if(data.session && data.session.user){
     currentUser=data.session.user;
@@ -274,6 +287,5 @@ supabase.auth.getSession().then(({ data })=>{
   }
 });
 </script>
-
 </body>
 </html>
