@@ -40,11 +40,9 @@ header { background:#0f1524; padding:1rem; text-align:center; font-size:1.5rem; 
   </div>
 </div>
 
-<!-- Supabase JS -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  // ------------------- INIT SUPABASE -------------------
   const supabaseUrl = 'https://azpgwbxillscpwrraprl.supabase.co';
   const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6cGd3YnhpbGxzY3B3cnJhcHJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg1MjQsImV4cCI6MjA3MjYzNDUyNH0.h7ZDxtH4pB3K5IzRB9goLJ1ldrY6EGf7CWT-ELGQ0i0';
   const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
@@ -114,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
       created_at: new Date().toISOString()
     };
 
-    appendMessage(newMessage, 'self'); // instant
+    appendMessage(newMessage, 'self'); // instant display
     messageInput.value = '';
     const { error } = await supabaseClient.from('global_messages').insert([newMessage]);
     if (error) console.error('Send message error:', error);
@@ -146,7 +144,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ------------------- REALTIME -------------------
   function subscribeMessages() {
-    supabaseClient
+    if (window.messageChannel) window.messageChannel.unsubscribe();
+
+    window.messageChannel = supabaseClient
       .channel('public:global_messages')
       .on(
         'postgres_changes',
@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
           appendMessage(m, 'other');
         }
       )
-      .subscribe();
+      .subscribe((status) => console.log('Realtime status:', status));
   }
 });
 </script>
