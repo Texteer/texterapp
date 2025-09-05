@@ -3,61 +3,80 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Texter — Global & DMs (Improved)</title>
+<title>Texter — Global & DMs (Full Scroll + Typing)</title>
 <style>
 :root{
   --bg:#0b1020; --panel:#121a2b; --panel-2:#0f172a; --accent:#3b82f6; --text:#e5e7eb;
   --muted:#8aa0c6; --border:#1f2a44; --me:#2563eb; --them:#1f2937; --danger:#ef4444; --success:#22c55e;
 }
 *{box-sizing:border-box}
-html,body{height:100%; margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:linear-gradient(140deg,#000,#0b1a33 45%,#000); color:var(--text);}
-body{display:flex; justify-content:center; align-items:center; min-height:100vh;}
+html,body{height:100%; margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:linear-gradient(140deg,#000,#0b1a33 45%,#000); color:var(--text); display:flex; align-items:center; justify-content:center;}
 .app{width:100%; max-width:1100px; height:92vh; display:grid; gap:10px; grid-template-columns:280px 1fr; grid-template-rows:auto 1fr auto; grid-template-areas:"header header" "sidebar chat" "sidebar input"; background:var(--bg); border:1px solid var(--border); border-radius:12px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,.4);}
-header{grid-area:header; background:var(--panel); padding:14px 18px; display:flex; justify-content:space-between; border-bottom:1px solid var(--border);}
-.brand{color:var(--accent); font-weight:700}
-.meInfo{color:var(--muted)}
-.sidebar{grid-area:sidebar; background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column}
-.sidebar-top{display:flex; gap:8px; padding:10px; border-bottom:1px solid var(--border); align-items:center}
-.sidebar-top .btn{flex:1}
-.results, .friends{overflow:auto; padding-bottom:8px}
-.search input{width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:#071228; color:var(--text)}
-.list-item{display:flex; gap:10px; align-items:center; padding:10px 12px; cursor:pointer; border-bottom:1px solid rgba(255,255,255,.03)}
-.list-item:hover{background:#0e1730}
-.avatar{width:36px; height:36px; border-radius:50%; display:grid; place-items:center; font-weight:700; color:#cde1ff; background:#0e2a5a; border:1px solid #18325e}
-.meta .name{font-size:.95rem}
-.meta .muted{color:var(--muted); font-size:.82rem}
-.badge{background:var(--danger); color:white; border-radius:999px; padding:2px 8px; font-size:12px}
-
-/* Chat */
+header{grid-area:header; background:var(--panel); padding:14px 18px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border);}
+.brand{color:var(--accent); font-weight:700;}
+.meInfo{color:var(--muted);}
+.sidebar{grid-area:sidebar; background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column;}
+.sidebar-top{display:flex; gap:8px; padding:10px; border-bottom:1px solid var(--border); align-items:center;}
+.sidebar-top .btn{flex:1;}
+.results, .friends{overflow:auto; padding-bottom:8px;}
+.search input{width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:#071228; color:var(--text);}
+.list-item{display:flex; gap:10px; align-items:center; padding:10px 12px; cursor:pointer; border-bottom:1px solid rgba(255,255,255,.03);}
+.list-item:hover{background:#0e1730;}
+.avatar{width:36px; height:36px; border-radius:50%; display:grid; place-items:center; font-weight:700; color:#cde1ff; background:#0e2a5a; border:1px solid #18325e;}
+.meta .name{font-size:.95rem;}
+.meta .muted{color:var(--muted); font-size:.82rem;}
+.badge{background:var(--danger); color:white; border-radius:999px; padding:2px 8px; font-size:12px;}
 .chat{grid-area:chat; display:flex; flex-direction:column; background:var(--panel-2);}
-.chat-header{padding:12px 16px; border-bottom:1px solid var(--border); display:flex; gap:10px; align-items:center}
-.messages{flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:10px;}
-.bubble{max-width:78%; padding:10px 12px; border-radius:12px; line-height:1.3; word-wrap:break-word}
-.bubble.me{align-self:flex-end; background:var(--me); color:white}
-.bubble.them{align-self:flex-start; background:var(--them); color:#e6eefc}
-.bubble .from{display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:.82rem; color:#cdd8ff}
-
-/* Typing indicator */
-.typing-indicator{font-size:.85rem; color:var(--accent); padding:0 16px; min-height:20px;}
-
-/* Composer */
-.composer{grid-area:input; display:flex; gap:10px; padding:12px; background:var(--panel); border-top:1px solid var(--border)}
-.composer input{flex:1; padding:12px; border-radius:10px; border:1px solid var(--border); background:#071228; color:var(--text)}
-.btn{padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:#0c1426; color:var(--text); cursor:pointer}
-.btn.primary{background:var(--accent); border-color:transparent}
-
-/* Small screens */
+.chat-header{padding:12px 16px; border-bottom:1px solid var(--border); display:flex; gap:10px; align-items:center;}
+#typingIndicator{color:var(--muted); font-size:.85rem; padding:0 16px; height:18px;}
+.messages{flex:1; overflow:auto; padding:14px; display:flex; flex-direction:column; gap:10px;}
+.bubble{max-width:78%; padding:10px 12px; border-radius:12px; line-height:1.3; word-wrap:break-word;}
+.bubble.me{align-self:flex-end; background:var(--me); color:white;}
+.bubble.them{align-self:flex-start; background:var(--them); color:#e6eefc;}
+.bubble .from{display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:.82rem; color:#cdd8ff;}
+.composer{grid-area:input; display:flex; gap:10px; padding:12px; background:var(--panel); border-top:1px solid var(--border);}
+.composer input{flex:1; padding:12px; border-radius:10px; border:1px solid var(--border); background:#071228; color:var(--text);}
+.btn{padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:#0c1426; color:var(--text); cursor:pointer;}
+.btn.primary{background:var(--accent); border-color:transparent;}
+.btn.hidden{display:none;}
 @media (max-width:900px){ .app{grid-template-columns:1fr; grid-template-areas:"header" "chat" "input"} .sidebar{display:none} .send-mobile{display:inline-flex} }
+.overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); z-index:60; }
+.card{background:var(--panel); padding:18px; border-radius:10px; border:1px solid var(--border); width:95%; max-width:420px}
+.note{color:var(--muted); font-size:.9rem}
+.small{font-size:.85rem; color:var(--muted)}
 </style>
 </head>
 <body>
-
-<div id="appRoot" class="app">
+<!-- AUTH modal -->
+<div id="authOverlay" class="overlay" style="display:none;">
+  <div class="card">
+    <h2 style="color:var(--accent)">Welcome</h2>
+    <p class="note">Log in with email & password.</p>
+    <input id="loginEmail" type="email" placeholder="Email" />
+    <input id="loginPassword" type="password" placeholder="Password" />
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button id="loginBtn" class="btn primary">Log in</button>
+      <button id="signupBtn" class="btn">Sign up</button>
+    </div>
+  </div>
+</div>
+<!-- USERNAME modal -->
+<div id="usernameOverlay" class="overlay" style="display:none;">
+  <div class="card">
+    <h3 style="color:var(--accent)">Pick a username</h3>
+    <input id="usernameField" type="text" placeholder="e.g. alex_99" />
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button id="saveUsername" class="btn primary">Save</button>
+    </div>
+    <p id="usernameError" class="small" style="color:var(--danger);display:none;margin-top:8px"></p>
+  </div>
+</div>
+<!-- MAIN APP -->
+<div id="appRoot" class="app" style="display:none;">
   <header>
     <div class="brand">Texter</div>
     <div class="meInfo" id="meInfo">—</div>
   </header>
-
   <aside class="sidebar">
     <div class="sidebar-top">
       <button id="toggleAdd" class="btn">➕ Add</button>
@@ -67,104 +86,134 @@ header{grid-area:header; background:var(--panel); padding:14px 18px; display:fle
     <div style="padding:10px;border-bottom:1px solid var(--border)">
       <div class="search"><input id="searchBox" placeholder="Search username…" /></div>
     </div>
-    <div class="friends" id="friendsList"></div>
+    <div class="friends" id="friendsList" style="padding-bottom:10px"></div>
   </aside>
-
   <section class="chat">
     <div class="chat-header">
       <div class="avatar" id="roomAvatar">GC</div>
       <div class="chat-title" id="roomTitle">Global Chat</div>
     </div>
-    <div class="typing-indicator" id="typingIndicator"></div>
+    <div id="typingIndicator"></div>
     <div class="messages" id="messages"></div>
   </section>
-
   <div class="composer">
-    <input id="composerInput" placeholder="Type a message… (Enter to send)" />
+    <input id="composerInput" placeholder="Type a message… (Enter to send on desktop)" />
     <button id="sendMobileBtn" class="btn primary send-mobile">Send</button>
+  </div>
+</div>
+
+<!-- Add friend popup -->
+<div id="addPopup" style="position:fixed; left:22px; top:70px; width:300px; display:none; z-index:50">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div><strong>Add friends</strong></div>
+      <button id="closeAdd" class="btn">X</button>
+    </div>
+    <div style="margin-top:10px">
+      <input id="addSearch" placeholder="search username" />
+      <div id="addResults" style="margin-top:8px; max-height:260px; overflow:auto"></div>
+    </div>
+  </div>
+</div>
+<!-- Requests popup -->
+<div id="reqPopup" style="position:fixed; left:22px; top:70px; width:300px; display:none; z-index:50">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div><strong>Requests</strong></div>
+      <button id="closeReq" class="btn">X</button>
+    </div>
+    <div id="reqList" style="margin-top:10px; max-height:320px; overflow:auto"></div>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = "YOUR_SUPABASE_URL";
-const SUPABASE_ANON = "YOUR_SUPABASE_ANON";
+const SUPABASE_ANON = "YOUR_SUPABASE_ANON_KEY";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-const $ = id => document.getElementById(id);
 
-let me = {email:"user@example.com", username:"User"}; // demo
-let currentView = {type:'global', peerEmail:null};
-let messagesDedup = new Set();
+const $ = id=>document.getElementById(id);
+let me = {email:null, username:null}, session=null;
+let currentView={type:'global', peerEmail:null, peerUsername:null};
+let messagesDedup=new Set();
 let typingUsers = new Set();
 
-// =====================
-// Helper: Scroll messages
-function scrollChat(){$('messages').scrollTop = $('messages').scrollHeight;}
+function escapeHtml(s){return (s||'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+const initials=(s='?')=>{if(!s)return'?';const p=String(s).split(/[\s_]+/).filter(Boolean);return (p[0]||'')[0]+((p[1]||'')[0]||'');};
+function scrollChat(){const m=$('messages'); m.scrollTop=m.scrollHeight;}
+function updateTypingIndicator(){ const el=$('typingIndicator'); const arr=Array.from(typingUsers); if(arr.length===0){el.innerText=''; return;} el.innerText= arr.length===1?`${arr[0]} is typing...`:`${arr.slice(0,-1).join(', ')} and ${arr.slice(-1)} are typing...`;}
 
-// =====================
-// Add message
-function addMessage(msg){
-  const key = msg.sender_email + '::' + (msg.message||'') + '::' + (msg.created_at||Date.now());
-  if(messagesDedup.has(key)) return;
-  messagesDedup.add(key);
-  const div = document.createElement('div');
-  div.className = 'bubble ' + (msg.sender_email===me.email?'me':'them');
-  if(msg.sender_email!==me.email){
-    div.innerHTML = `<div class="from"><div class="avatar" style="width:26px;height:26px;font-size:.8rem">${msg.username[0]}</div><div>${msg.username}</div></div><div>${msg.message}</div>`;
-  }else{
-    div.innerHTML = `<div>${msg.message}</div>`;
-  }
-  $('messages').appendChild(div);
-  scrollChat();
+// Boot & Auth
+(async function boot(){
+  const { data:{ session:s } } = await sb.auth.getSession();
+  session=s;
+  if(session && session.user) afterLogin(session.user);
+  else showAuth();
+})();
+sb.auth.onAuthStateChange((e,s)=>{if(e==='SIGNED_OUT'){me={email:null,username:null}; messagesDedup.clear(); showAuth();} if(s && s.user) session=s;});
+function showAuth(){ $('authOverlay').style.display='flex'; $('usernameOverlay').style.display='none'; $('appRoot').style.display='none';}
+function showUsername(){ $('authOverlay').style.display='none'; $('usernameOverlay').style.display='flex'; $('appRoot').style.display='none';}
+function showApp(){ $('authOverlay').style.display='none'; $('usernameOverlay').style.display='none'; $('appRoot').style.display='grid');}
+
+// Login/signup
+$('loginBtn').addEventListener('click',async()=>{const email=$('loginEmail').value.trim(); const pw=$('loginPassword').value; if(!email||!pw)return alert("Enter email & password"); const { data,error }=await sb.auth.signInWithPassword({email,password:pw}); if(error){alert(error.message); return;} afterLogin(data.user);});
+$('signupBtn').addEventListener('click',async()=>{const email=$('loginEmail').value.trim(); const pw=$('loginPassword').value; if(!email||!pw)return alert("Enter email & password"); const { data,error }=await sb.auth.signUp({email,password:pw}); if(error){alert(error.message); return;} alert("Signed up, check email to confirm.");});
+
+// After login
+async function afterLogin(user){
+  me.email=user.email;
+  const { data:row } = await sb.from('users').select('username').eq('email',me.email).maybeSingle();
+  if(!row || !row.username){ $('usernameField').value=''; $('usernameError').style.display='none'; showUsername(); return;}
+  me.username=row.username; showApp(); startApp();
 }
 
-// =====================
-// Typing indicator update
-function updateTypingIndicator(){
-  const arr = Array.from(typingUsers);
-  if(arr.length===0) $('typingIndicator').innerText='';
-  else if(arr.length===1) $('typingIndicator').innerText=arr[0]+' is typing...';
-  else $('typingIndicator').innerText=arr.join(' and ')+' are typing...';
-}
-
-// =====================
-// Send message
-async function sendMessage(){
-  const txt = $('composerInput').value.trim();
-  if(!txt) return;
-  // insert into supabase messages table
-  const payload = { username: me.username, message: txt, sender_email: me.email };
-  const { data, error } = await sb.from('messages').insert([payload]).select();
-  if(error) { console.error(error); return; }
-  if(data && data[0]) addMessage(data[0]);
-  $('composerInput').value='';
-  // broadcast stop typing
-  sb.channel('public:messages').send({type:'typing', event:'stop', username:me.username});
-}
-
-// =====================
-// Composer event
-$('composerInput').addEventListener('keydown', e=>{
-  if(e.key==='Enter'){ e.preventDefault(); sendMessage(); }
-  else sb.channel('public:messages').send({type:'typing', event:'start', username:me.username});
-});
-$('composerInput').addEventListener('keyup', e=>{
-  setTimeout(()=>sb.channel('public:messages').send({type:'typing', event:'stop', username:me.username}), 2000);
+// Save username
+$('saveUsername').addEventListener('click', async ()=>{
+  const u=$('usernameField').value.trim();
+  if(!/^[A-Za-z0-9_]{1,15}$/.test(u)){ $('usernameError').innerText="Invalid username"; $('usernameError').style.display='block'; return;}
+  const { data: exists }=await sb.from('users').select('email').eq('username',u).maybeSingle();
+  if(exists){ $('usernameError').innerText="Username taken"; $('usernameError').style.display='block'; return;}
+  await sb.from('users').upsert({email:me.email,username:u},{onConflict:'email'});
+  me.username=u; showApp(); startApp();
 });
 
-// =====================
-// Subscribe global messages + typing
-const globalChannel = sb.channel('public:messages')
-  .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'}, payload=>{
-    const m = payload.new;
-    if(m.sender_email!==me.email) addMessage(m);
-  })
-  .on('broadcast', { event:'typing' }, payload=>{
-    if(payload.event==='start') typingUsers.add(payload.username);
-    else typingUsers.delete(payload.username);
-    updateTypingIndicator();
-  })
-  .subscribe();
+// Logout
+$('logoutBtn').addEventListener('click',async()=>{await sb.auth.signOut(); messagesDedup.clear(); $('messages').innerHTML=''; showAuth();});
+
+// Start app
+function startApp(){
+  $('meInfo').innerText=`${me.username} — ${me.email}`;
+  messagesDedup.clear();
+  loadGlobalMessages(); subscribeGlobal(); wireComposer(); wireSidebar(); loadFriends(); loadRequests();
+}
+
+// Messages
+async function loadGlobalMessages(){ const { data,error }=await sb.from('messages').select('*').order('created_at',{ascending:true}); if(error) return; const container=$('messages'); container.innerHTML=''; (data||[]).forEach(addMessageToUI); scrollChat();}
+function addMessageToUI(m){ const key=`${m.sender_email}::${m.message||m.content||''}::${m.created_at}`; if(messagesDedup.has(key)) return; messagesDedup.add(key); const container=$('messages'); const mine=(m.sender_email===me.email); const div=document.createElement('div'); div.className='bubble '+(mine?'me':'them'); const displayName=m.username||m.sender_email||'Unknown'; if(!mine){div.innerHTML=`<div class="from"><div class="avatar" style="width:26px;height:26px;font-size:.8rem">${escapeHtml(initials(displayName))}</div><div>${escapeHtml(displayName)}</div></div><div>${escapeHtml(m.message||m.content||'')}</div>`;}else{div.innerHTML=`<div>${escapeHtml(m.message||m.content||'')}</div>`;} container.appendChild(div); scrollChat();}
+
+// Subscriptions
+let globalChannel=null, dmChannel=null;
+function subscribeGlobal(){ if(globalChannel){ try{sb.removeChannel(globalChannel);}catch(e){}; globalChannel=null; messagesDedup.clear();}
+globalChannel=sb.channel('public:messages')
+.on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},payload=>{addMessageToUI(payload.new);})
+.on('broadcast',{event:'typing'},payload=>{if(payload.event==='start') typingUsers.add(payload.username); else typingUsers.delete(payload.username); updateTypingIndicator();})
+.subscribe();}
+
+// Composer
+function wireComposer(){
+  const input=$('composerInput');
+  input.addEventListener('keydown',async(e)=>{if(e.key==='Enter'){e.preventDefault();sendMessage(); startTyping();}});
+  input.addEventListener('input',startTyping);
+  $('sendMobileBtn').addEventListener('click',sendMessage);
+}
+let typingTimeout;
+function startTyping(){ sb.channel(currentView.type==='global'?'public:messages':'dm-'+me.email+'-'+currentView.peerEmail).send({type:'broadcast',event:'typing',username:me.username,eventType:'start'}); clearTimeout(typingTimeout); typingTimeout=setTimeout(()=>{ sb.channel(currentView.type==='global'?'public:messages':'dm-'+me.email+'-'+currentView.peerEmail).send({type:'broadcast',event:'typing',username:me.username,eventType:'stop'}); },2000);}
+async function sendMessage(){ const txt=$('composerInput').value.trim(); if(!txt)return; try{ if(currentView.type==='global'){ const payload={username:me.username,message:txt,sender_email:me.email}; const { data,error }=await sb.from('messages').insert([payload]).select(); if(data&&data[0]) addMessageToUI(data[0]); if(error) console.error(error); $('composerInput').value='';} else if(currentView.type==='dm'&&currentView.peerEmail){ const payload={sender_email:me.email,receiver_email:currentView.peerEmail,content:txt}; const { data,error }=await sb.from('dm_messages').insert([payload]).select(); if(data&&data[0]) addMessageToUI({username:me.username,message:txt,sender_email:me.email,created_at:data[0].created_at}); $('composerInput').value='';} }catch(err){console.error(err);}
+}
+
+// Sidebar, friends, requests (minimal; reuse your code)
+function wireSidebar(){ /* add toggles, search etc same as your code */ }
+// loadFriends, loadRequests, respondRequest, openDM, subscribeDM etc - same as your previous code logic
 </script>
 </body>
 </html>
