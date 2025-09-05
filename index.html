@@ -47,7 +47,9 @@ header { background:#0f1524; padding:1rem; text-align:center; font-size:1.5rem; 
   // ------------------- SUPABASE INITIALIZATION -------------------
   const supabaseUrl = 'https://azpgwbxillscpwrraprl.supabase.co';
   const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6cGd3YnhpbGxzY3B3cnJhcHJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg1MjQsImV4cCI6MjA3MjYzNDUyNH0.h7ZDxtH4pB3K5IzRB9goLJ1ldrY6EGf7CWT-ELGQ0i0';
-  const supabase = Supabase.createClient(supabaseUrl, supabaseKey);
+  
+  // Use the correct lowercase 'supabase' from the CDN
+  const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
   let currentUser = null;
   const messagesEl = document.getElementById('messages');
@@ -67,13 +69,13 @@ header { background:#0f1524; padding:1rem; text-align:center; font-size:1.5rem; 
   // ------------------- SEND MESSAGE -------------------
   sendBtn.onclick = async () => {
     if(!messageInput.value) return;
-    await supabase.from('global_messages').insert([{ username: currentUser.username, message: messageInput.value }]);
+    await supabaseClient.from('global_messages').insert([{ username: currentUser.username, message: messageInput.value }]);
     messageInput.value='';
   };
 
   // ------------------- LOAD MESSAGES -------------------
   async function loadMessages(){
-    const { data } = await supabase.from('global_messages').select('*').order('created_at',{ascending:true});
+    const { data } = await supabaseClient.from('global_messages').select('*').order('created_at',{ascending:true});
     messagesEl.innerHTML='';
     data.forEach(m => {
       const div = document.createElement('div');
@@ -86,7 +88,7 @@ header { background:#0f1524; padding:1rem; text-align:center; font-size:1.5rem; 
 
   // ------------------- REALTIME -------------------
   function subscribeMessages(){
-    supabase.channel('messages')
+    supabaseClient.channel('messages')
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'global_messages'},payload=>{
         const m = payload.new;
         const div = document.createElement('div');
@@ -97,5 +99,6 @@ header { background:#0f1524; padding:1rem; text-align:center; font-size:1.5rem; 
       }).subscribe();
   }
 </script>
+
 </body>
 </html>
