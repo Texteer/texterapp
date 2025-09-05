@@ -3,67 +3,86 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Texter — Global & DMs (Full Scroll + Typing)</title>
+<title>Texter — Global & DMs (Full)</title>
 <style>
 :root{
   --bg:#0b1020; --panel:#121a2b; --panel-2:#0f172a; --accent:#3b82f6; --text:#e5e7eb;
   --muted:#8aa0c6; --border:#1f2a44; --me:#2563eb; --them:#1f2937; --danger:#ef4444; --success:#22c55e;
 }
 *{box-sizing:border-box}
-html,body{height:100%; margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:linear-gradient(140deg,#000,#0b1a33 45%,#000); color:var(--text); display:flex; align-items:center; justify-content:center;}
-.app{width:100%; max-width:1100px; height:92vh; display:grid; gap:10px; grid-template-columns:280px 1fr; grid-template-rows:auto 1fr auto; grid-template-areas:"header header" "sidebar chat" "sidebar input"; background:var(--bg); border:1px solid var(--border); border-radius:12px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,.4);}
-header{grid-area:header; background:var(--panel); padding:14px 18px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border);}
-.brand{color:var(--accent); font-weight:700;}
-.meInfo{color:var(--muted);}
-.sidebar{grid-area:sidebar; background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column;}
-.sidebar-top{display:flex; gap:8px; padding:10px; border-bottom:1px solid var(--border); align-items:center;}
-.sidebar-top .btn{flex:1;}
-.results, .friends{overflow:auto; padding-bottom:8px;}
-.search input{width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:#071228; color:var(--text);}
-.list-item{display:flex; gap:10px; align-items:center; padding:10px 12px; cursor:pointer; border-bottom:1px solid rgba(255,255,255,.03);}
-.list-item:hover{background:#0e1730;}
-.avatar{width:36px; height:36px; border-radius:50%; display:grid; place-items:center; font-weight:700; color:#cde1ff; background:#0e2a5a; border:1px solid #18325e;}
-.meta .name{font-size:.95rem;}
-.meta .muted{color:var(--muted); font-size:.82rem;}
-.badge{background:var(--danger); color:white; border-radius:999px; padding:2px 8px; font-size:12px;}
-.chat{grid-area:chat; display:flex; flex-direction:column; background:var(--panel-2);}
-.chat-header{padding:12px 16px; border-bottom:1px solid var(--border); display:flex; gap:10px; align-items:center;}
-#typingIndicator{color:var(--muted); font-size:.85rem; padding:0 16px; height:18px;}
-.messages{flex:1; overflow:auto; padding:14px; display:flex; flex-direction:column; gap:10px;}
-.bubble{max-width:78%; padding:10px 12px; border-radius:12px; line-height:1.3; word-wrap:break-word;}
-.bubble.me{align-self:flex-end; background:var(--me); color:white;}
-.bubble.them{align-self:flex-start; background:var(--them); color:#e6eefc;}
-.bubble .from{display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:.82rem; color:#cdd8ff;}
-.composer{grid-area:input; display:flex; gap:10px; padding:12px; background:var(--panel); border-top:1px solid var(--border);}
-.composer input{flex:1; padding:12px; border-radius:10px; border:1px solid var(--border); background:#071228; color:var(--text);}
-.btn{padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:#0c1426; color:var(--text); cursor:pointer;}
-.btn.primary{background:var(--accent); border-color:transparent;}
-.btn.hidden{display:none;}
-@media (max-width:900px){ .app{grid-template-columns:1fr; grid-template-areas:"header" "chat" "input"} .sidebar{display:none} .send-mobile{display:inline-flex} }
-.overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); z-index:60; }
-.card{background:var(--panel); padding:18px; border-radius:10px; border:1px solid var(--border); width:95%; max-width:420px}
-.note{color:var(--muted); font-size:.9rem}
-.small{font-size:.85rem; color:var(--muted)}
+html,body{height:100%; margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:linear-gradient(140deg,#000,#0b1a33 45%,#000); color:var(--text);}
+body{display:flex;align-items:center;justify-content:center;min-height:100vh;}
+
+/* Layout */
+.app{width:100%;max-width:1100px;height:92vh;display:grid;gap:10px;grid-template-columns:280px 1fr;grid-template-rows:auto 1fr auto;grid-template-areas:"header header" "sidebar chat" "sidebar input";background:var(--bg);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.4);}
+header{grid-area:header;background:var(--panel);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.brand{color:var(--accent);font-weight:700}
+.meInfo{color:var(--muted)}
+
+/* Sidebar */
+.sidebar{grid-area:sidebar;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column}
+.sidebar-top{display:flex;gap:8px;padding:10px;border-bottom:1px solid var(--border);align-items:center}
+.sidebar-top .btn{flex:1}
+.results, .friends{overflow:auto; padding-bottom:8px}
+.search input{width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:#071228; color:var(--text)}
+.list-item{display:flex;gap:10px;align-items:center;padding:10px 12px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.03)}
+.list-item:hover{background:#0e1730}
+.avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#cde1ff;background:#0e2a5a;border:1px solid #18325e}
+.meta .name{font-size:.95rem}
+.meta .muted{color:var(--muted);font-size:.82rem}
+.badge{background:var(--danger);color:white;border-radius:999px;padding:2px 8px;font-size:12px}
+
+/* Chat */
+.chat{grid-area:chat;display:flex;flex-direction:column;background:var(--panel-2)}
+.chat-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center}
+.messages{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.bubble{max-width:78%;padding:10px 12px;border-radius:12px;line-height:1.3;word-wrap:break-word}
+.bubble.me{align-self:flex-end;background:var(--me);color:white}
+.bubble.them{align-self:flex-start;background:var(--them);color:#e6eefc}
+.bubble .from{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:.82rem;color:#cdd8ff}
+
+/* Typing indicator */
+.typing{font-size:.85rem;color:var(--accent);margin-bottom:4px;}
+
+/* Composer */
+.composer{grid-area:input;display:flex;gap:10px;padding:12px;background:var(--panel);border-top:1px solid var(--border)}
+.composer input{flex:1;padding:12px;border-radius:10px;border:1px solid var(--border);background:#071228;color:var(--text)}
+.btn{padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:#0c1426;color:var(--text);cursor:pointer}
+.btn.primary{background:var(--accent);border-color:transparent}
+.btn.hidden{display:none}
+
+/* Small screens */
+@media (max-width:900px){ .app{grid-template-columns:1fr;grid-template-areas:"header" "chat" "input"} .sidebar{display:none} .send-mobile{display:inline-flex} }
+
+/* Modals */
+.overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);z-index:60;}
+.card{background:var(--panel);padding:18px;border-radius:10px;border:1px solid var(--border);width:95%;max-width:420px;}
+.note{color:var(--muted);font-size:.9rem;}
+.small{font-size:.85rem;color:var(--muted);}
 </style>
 </head>
 <body>
+
 <!-- AUTH modal -->
 <div id="authOverlay" class="overlay" style="display:none;">
   <div class="card">
     <h2 style="color:var(--accent)">Welcome</h2>
-    <p class="note">Log in with email & password.</p>
+    <p class="note">Log in with email & password. First-time users will set a username.</p>
     <input id="loginEmail" type="email" placeholder="Email" />
     <input id="loginPassword" type="password" placeholder="Password" />
     <div style="display:flex;gap:8px;margin-top:8px">
       <button id="loginBtn" class="btn primary">Log in</button>
       <button id="signupBtn" class="btn">Sign up</button>
     </div>
+    <p class="small" style="margin-top:8px">Open the browser console (F12 → Console) if anything fails — errors will be logged there.</p>
   </div>
 </div>
+
 <!-- USERNAME modal -->
 <div id="usernameOverlay" class="overlay" style="display:none;">
   <div class="card">
     <h3 style="color:var(--accent)">Pick a username</h3>
+    <p class="note">Letters, numbers, underscore. Max 15 characters.</p>
     <input id="usernameField" type="text" placeholder="e.g. alex_99" />
     <div style="display:flex;gap:8px;margin-top:8px">
       <button id="saveUsername" class="btn primary">Save</button>
@@ -71,12 +90,14 @@ header{grid-area:header; background:var(--panel); padding:14px 18px; display:fle
     <p id="usernameError" class="small" style="color:var(--danger);display:none;margin-top:8px"></p>
   </div>
 </div>
+
 <!-- MAIN APP -->
 <div id="appRoot" class="app" style="display:none;">
   <header>
     <div class="brand">Texter</div>
     <div class="meInfo" id="meInfo">—</div>
   </header>
+
   <aside class="sidebar">
     <div class="sidebar-top">
       <button id="toggleAdd" class="btn">➕ Add</button>
@@ -88,16 +109,18 @@ header{grid-area:header; background:var(--panel); padding:14px 18px; display:fle
     </div>
     <div class="friends" id="friendsList" style="padding-bottom:10px"></div>
   </aside>
+
   <section class="chat">
     <div class="chat-header">
       <div class="avatar" id="roomAvatar">GC</div>
       <div class="chat-title" id="roomTitle">Global Chat</div>
     </div>
-    <div id="typingIndicator"></div>
+    <div class="typing" id="typingIndicator" style="display:none"></div>
     <div class="messages" id="messages"></div>
   </section>
+
   <div class="composer">
-    <input id="composerInput" placeholder="Type a message… (Enter to send on desktop)" />
+    <input id="composerInput" placeholder="Type a message… (Enter to send)" />
     <button id="sendMobileBtn" class="btn primary send-mobile">Send</button>
   </div>
 </div>
@@ -115,6 +138,7 @@ header{grid-area:header; background:var(--panel); padding:14px 18px; display:fle
     </div>
   </div>
 </div>
+
 <!-- Requests popup -->
 <div id="reqPopup" style="position:fixed; left:22px; top:70px; width:300px; display:none; z-index:50">
   <div class="card">
@@ -128,92 +152,190 @@ header{grid-area:header; background:var(--panel); padding:14px 18px; display:fle
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SUPABASE_URL = "YOUR_SUPABASE_URL";
-const SUPABASE_ANON = "YOUR_SUPABASE_ANON_KEY";
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const SUPABASE_URL = "https://fhokwoazuhkwrkrweddd.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc";
+const sb = supabase.createClient(SUPABASE_URL,SUPABASE_ANON);
 
 const $ = id=>document.getElementById(id);
-let me = {email:null, username:null}, session=null;
-let currentView={type:'global', peerEmail:null, peerUsername:null};
-let messagesDedup=new Set();
-let typingUsers = new Set();
+const initials = s=>{if(!s)return'?';const p=s.split(/[\s_]+/).filter(Boolean);return (p[0]||'')[0]+((p[1]||'')[0]||'');}
+const escapeHtml=s=>s.replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 
-function escapeHtml(s){return (s||'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
-const initials=(s='?')=>{if(!s)return'?';const p=String(s).split(/[\s_]+/).filter(Boolean);return (p[0]||'')[0]+((p[1]||'')[0]||'');};
-function scrollChat(){const m=$('messages'); m.scrollTop=m.scrollHeight;}
-function updateTypingIndicator(){ const el=$('typingIndicator'); const arr=Array.from(typingUsers); if(arr.length===0){el.innerText=''; return;} el.innerText= arr.length===1?`${arr[0]} is typing...`:`${arr.slice(0,-1).join(', ')} and ${arr.slice(-1)} are typing...`;}
+let session=null, me={email:null,username:null}, currentView={type:'global',peerEmail:null}, messagesDedup=new Set(), typingUsers=new Set(), globalChannel=null, dmChannel=null;
 
-// Boot & Auth
-(async function boot(){
-  const { data:{ session:s } } = await sb.auth.getSession();
-  session=s;
-  if(session && session.user) afterLogin(session.user);
-  else showAuth();
+(async function boot(){ 
+  const { data:{session:s} }=await sb.auth.getSession(); session=s;
+  if(session&&session.user) afterLogin(session.user); else showAuth();
 })();
-sb.auth.onAuthStateChange((e,s)=>{if(e==='SIGNED_OUT'){me={email:null,username:null}; messagesDedup.clear(); showAuth();} if(s && s.user) session=s;});
-function showAuth(){ $('authOverlay').style.display='flex'; $('usernameOverlay').style.display='none'; $('appRoot').style.display='none';}
-function showUsername(){ $('authOverlay').style.display='none'; $('usernameOverlay').style.display='flex'; $('appRoot').style.display='none';}
-function showApp(){ $('authOverlay').style.display='none'; $('usernameOverlay').style.display='none'; $('appRoot').style.display='grid');}
 
-// Login/signup
-$('loginBtn').addEventListener('click',async()=>{const email=$('loginEmail').value.trim(); const pw=$('loginPassword').value; if(!email||!pw)return alert("Enter email & password"); const { data,error }=await sb.auth.signInWithPassword({email,password:pw}); if(error){alert(error.message); return;} afterLogin(data.user);});
-$('signupBtn').addEventListener('click',async()=>{const email=$('loginEmail').value.trim(); const pw=$('loginPassword').value; if(!email||!pw)return alert("Enter email & password"); const { data,error }=await sb.auth.signUp({email,password:pw}); if(error){alert(error.message); return;} alert("Signed up, check email to confirm.");});
+sb.auth.onAuthStateChange((event,s)=>{ if(event==='SIGNED_OUT'){me={email:null,username:null};messagesDedup.clear();showAuth();} if(s&&s.user) session=s; });
 
-// After login
-async function afterLogin(user){
-  me.email=user.email;
-  const { data:row } = await sb.from('users').select('username').eq('email',me.email).maybeSingle();
-  if(!row || !row.username){ $('usernameField').value=''; $('usernameError').style.display='none'; showUsername(); return;}
-  me.username=row.username; showApp(); startApp();
-}
+function showAuth(){ $('authOverlay').style.display='flex'; $('usernameOverlay').style.display='none'; $('appRoot').style.display='none'; }
+function showUsername(){ $('authOverlay').style.display='none'; $('usernameOverlay').style.display='flex'; $('appRoot').style.display='none'; }
+function showApp(){ $('authOverlay').style.display='none'; $('usernameOverlay').style.display='none'; $('appRoot').style.display='grid'; }
 
-// Save username
-$('saveUsername').addEventListener('click', async ()=>{
-  const u=$('usernameField').value.trim();
-  if(!/^[A-Za-z0-9_]{1,15}$/.test(u)){ $('usernameError').innerText="Invalid username"; $('usernameError').style.display='block'; return;}
-  const { data: exists }=await sb.from('users').select('email').eq('username',u).maybeSingle();
-  if(exists){ $('usernameError').innerText="Username taken"; $('usernameError').style.display='block'; return;}
-  await sb.from('users').upsert({email:me.email,username:u},{onConflict:'email'});
-  me.username=u; showApp(); startApp();
+$('loginBtn').addEventListener('click',async()=>{
+  const email=$('loginEmail').value.trim(), password=$('loginPassword').value;
+  if(!email||!password) return alert("Enter email & password");
+  const { data,error } = await sb.auth.signInWithPassword({email,password});
+  if(error){alert("Login error: "+error.message); return;} afterLogin(data.user);
+});
+$('signupBtn').addEventListener('click',async()=>{
+  const email=$('loginEmail').value.trim(), password=$('loginPassword').value;
+  if(!email||!password)return alert("Enter email & password");
+  const { data,error }=await sb.auth.signUp({email,password});
+  if(error){alert("Signup error: "+error.message);return;} alert("Signed up, check email"); 
 });
 
-// Logout
-$('logoutBtn').addEventListener('click',async()=>{await sb.auth.signOut(); messagesDedup.clear(); $('messages').innerHTML=''; showAuth();});
+async function afterLogin(user){
+  me.email=user.email;
+  const { data: row } = await sb.from('users').select('username').eq('email',me.email).maybeSingle();
+  if(!row||!row.username){ $('usernameField').value=''; $('usernameError').style.display='none'; showUsername(); }
+  else{ me.username=row.username; showApp(); startApp();}
+}
 
-// Start app
+$('saveUsername').addEventListener('click',async()=>{
+  const u=$('usernameField').value.trim();
+  if(!/^[A-Za-z0-9_]{1,15}$/.test(u)){ $('usernameError').innerText="Invalid username"; $('usernameError').style.display='block'; return;}
+  const { data: exists } = await sb.from('users').select('email').eq('username',u).maybeSingle();
+  if(exists){$('usernameError').innerText="Username taken"; $('usernameError').style.display='block';return;}
+  const { error } = await sb.from('users').upsert({email:me.email,username:u},{onConflict:'email'});
+  if(error){alert("Error saving username");return;} me.username=u; showApp(); startApp();
+});
+
+$('logoutBtn').addEventListener('click',async()=>{ await sb.auth.signOut(); messagesDedup.clear(); showAuth(); });
+
 function startApp(){
   $('meInfo').innerText=`${me.username} — ${me.email}`;
   messagesDedup.clear();
-  loadGlobalMessages(); subscribeGlobal(); wireComposer(); wireSidebar(); loadFriends(); loadRequests();
+  loadGlobalMessages();
+  subscribeGlobal();
+  loadFriends();
+  loadRequests();
 }
 
-// Messages
-async function loadGlobalMessages(){ const { data,error }=await sb.from('messages').select('*').order('created_at',{ascending:true}); if(error) return; const container=$('messages'); container.innerHTML=''; (data||[]).forEach(addMessageToUI); scrollChat();}
-function addMessageToUI(m){ const key=`${m.sender_email}::${m.message||m.content||''}::${m.created_at}`; if(messagesDedup.has(key)) return; messagesDedup.add(key); const container=$('messages'); const mine=(m.sender_email===me.email); const div=document.createElement('div'); div.className='bubble '+(mine?'me':'them'); const displayName=m.username||m.sender_email||'Unknown'; if(!mine){div.innerHTML=`<div class="from"><div class="avatar" style="width:26px;height:26px;font-size:.8rem">${escapeHtml(initials(displayName))}</div><div>${escapeHtml(displayName)}</div></div><div>${escapeHtml(m.message||m.content||'')}</div>`;}else{div.innerHTML=`<div>${escapeHtml(m.message||m.content||'')}</div>`;} container.appendChild(div); scrollChat();}
+async function loadGlobalMessages(){
+  const { data: msgs } = await sb.from('global_messages').select('*').order('created_at',{ascending:true});
+  $('messages').innerHTML='';
+  (msgs||[]).forEach(m=>addMessageToUI({username:m.sender_username,message:m.content,sender_email:m.sender_email,created_at:m.created_at}));
+  scrollChat();
+}
 
-// Subscriptions
-let globalChannel=null, dmChannel=null;
-function subscribeGlobal(){ if(globalChannel){ try{sb.removeChannel(globalChannel);}catch(e){}; globalChannel=null; messagesDedup.clear();}
-globalChannel=sb.channel('public:messages')
-.on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},payload=>{addMessageToUI(payload.new);})
-.on('broadcast',{event:'typing'},payload=>{if(payload.event==='start') typingUsers.add(payload.username); else typingUsers.delete(payload.username); updateTypingIndicator();})
-.subscribe();}
+function subscribeGlobal(){
+  if(globalChannel) try{sb.removeChannel(globalChannel);}catch(e){} 
+  globalChannel=sb.channel('global')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'global_messages'},payload=>{
+      const m=payload.new; addMessageToUI({username:m.sender_username,message:m.content,sender_email:m.sender_email,created_at:m.created_at});
+    })
+    .on('broadcast',{event:'typing'},payload=>{
+      if(payload.eventType==='start') typingUsers.add(payload.username); else typingUsers.delete(payload.username);
+      updateTypingIndicator();
+    }).subscribe();
+}
 
 // Composer
-function wireComposer(){
-  const input=$('composerInput');
-  input.addEventListener('keydown',async(e)=>{if(e.key==='Enter'){e.preventDefault();sendMessage(); startTyping();}});
-  input.addEventListener('input',startTyping);
-  $('sendMobileBtn').addEventListener('click',sendMessage);
-}
-let typingTimeout;
-function startTyping(){ sb.channel(currentView.type==='global'?'public:messages':'dm-'+me.email+'-'+currentView.peerEmail).send({type:'broadcast',event:'typing',username:me.username,eventType:'start'}); clearTimeout(typingTimeout); typingTimeout=setTimeout(()=>{ sb.channel(currentView.type==='global'?'public:messages':'dm-'+me.email+'-'+currentView.peerEmail).send({type:'broadcast',event:'typing',username:me.username,eventType:'stop'}); },2000);}
-async function sendMessage(){ const txt=$('composerInput').value.trim(); if(!txt)return; try{ if(currentView.type==='global'){ const payload={username:me.username,message:txt,sender_email:me.email}; const { data,error }=await sb.from('messages').insert([payload]).select(); if(data&&data[0]) addMessageToUI(data[0]); if(error) console.error(error); $('composerInput').value='';} else if(currentView.type==='dm'&&currentView.peerEmail){ const payload={sender_email:me.email,receiver_email:currentView.peerEmail,content:txt}; const { data,error }=await sb.from('dm_messages').insert([payload]).select(); if(data&&data[0]) addMessageToUI({username:me.username,message:txt,sender_email:me.email,created_at:data[0].created_at}); $('composerInput').value='';} }catch(err){console.error(err);}
+const composer=$('composerInput'); composer.addEventListener('keydown',async(e)=>{
+  if(e.key==='Enter'){ e.preventDefault(); sendMessage(); }
+  else sendTyping(true);
+});
+let typingTimeout=null;
+function sendTyping(start){
+  sb.channel(currentView.type==='global'?'global':dmChannel?.name||'').send({type:'broadcast',event:'typing',payload:{username:me.username,eventType:start?'start':'stop'}});
+  if(start){ clearTimeout(typingTimeout); typingTimeout=setTimeout(()=>sendTyping(false),2500); }
 }
 
-// Sidebar, friends, requests (minimal; reuse your code)
-function wireSidebar(){ /* add toggles, search etc same as your code */ }
-// loadFriends, loadRequests, respondRequest, openDM, subscribeDM etc - same as your previous code logic
+async function sendMessage(){
+  const msg=composer.value.trim(); if(!msg)return; composer.value='';
+  if(currentView.type==='global'){ await sb.from('global_messages').insert({sender_email:me.email,sender_username:me.username,content:msg});}
+  else if(currentView.type==='dm'){ await sb.from('dm_messages').insert({sender_email:me.email,receiver_email:currentView.peerEmail,content:msg});}
+}
+
+function addMessageToUI({username,message,sender_email,created_at}){
+  const id=sender_email+'-'+created_at;
+  if(messagesDedup.has(id)) return; messagesDedup.add(id);
+  const b=document.createElement('div'); b.className='bubble '+(sender_email===me.email?'me':'them');
+  b.innerHTML=`<div class="from">${escapeHtml(username)}</div>${escapeHtml(message)}`;
+  $('messages').appendChild(b); scrollChat();
+}
+
+function scrollChat(){ $('messages').scrollTop=$('messages').scrollHeight; }
+function updateTypingIndicator(){ if(typingUsers.size===0){$('typingIndicator').style.display='none';} else {$('typingIndicator').style.display='block';$('typingIndicator').innerText=[...typingUsers].join(', ')+' is typing...';}}
+
+// Friends
+async function loadFriends(){
+  const { data: friends } = await sb.from('friends').select('user_email,friend_email,friend_username,status').or(`user_email.eq.${me.email},friend_email.eq.${me.email}`);
+  const container=$('friendsList'); container.innerHTML='';
+  (friends||[]).forEach(f=>{
+    let friendEmail=f.friend_email===me.email?f.user_email:f.friend_email;
+    let friendUsername=f.friend_email===me.email?f.user_username:f.friend_username;
+    const div=document.createElement('div'); div.className='list-item';
+    div.innerHTML=`<div class="avatar">${initials(friendUsername)}</div><div class="meta"><div class="name">${friendUsername}</div><div class="muted">${f.status}</div></div>`;
+    div.addEventListener('click',()=>openDM(friendEmail,friendUsername));
+    container.appendChild(div);
+  });
+}
+
+// Requests
+$('toggleAdd').addEventListener('click',()=>$('addPopup').style.display='block');
+$('closeAdd').addEventListener('click',()=>$('addPopup').style.display='none');
+$('toggleReq').addEventListener('click',()=>$('reqPopup').style.display='block');
+$('closeReq').addEventListener('click',()=>$('reqPopup').style.display='none');
+
+async function loadRequests(){
+  const { data:reqs }=await sb.from('friend_requests').select('from_email,from_username').eq('to_email',me.email);
+  $('reqList').innerHTML=''; 
+  reqs.forEach(r=>{
+    const div=document.createElement('div'); div.className='list-item';
+    div.innerHTML=`<div class="meta"><div class="name">${r.from_username}</div></div><button class="btn primary">Accept</button>`;
+    const btn=div.querySelector('button'); btn.addEventListener('click',()=>acceptRequest(r.from_email));
+    $('reqList').appendChild(div);
+  });
+  $('reqCount').style.display=reqs.length? 'inline-block':'none';
+  $('reqCount').innerText=reqs.length;
+}
+
+async function acceptRequest(fromEmail){
+  await sb.from('friends').insert([{user_email:me.email,friend_email:fromEmail,status:'friends'}]);
+  await sb.from('friend_requests').delete().eq('from_email',fromEmail).eq('to_email',me.email);
+  loadRequests(); loadFriends();
+}
+
+// DMs
+async function openDM(peerEmail,peerUsername){
+  currentView={type:'dm',peerEmail,peerUsername};
+  $('roomTitle').innerText=peerUsername; $('roomAvatar').innerText=initials(peerUsername);
+  $('messages').innerHTML=''; messagesDedup.clear(); typingUsers.clear(); updateTypingIndicator();
+  const { data:msgs } = await sb.from('dm_messages').select('*').or(`sender_email.eq.${me.email},receiver_email.eq.${peerEmail}`).order('created_at',{ascending:true});
+  (msgs||[]).forEach(m=>addMessageToUI({username:m.sender_email===me.email?me.username:peerUsername,message:m.content,sender_email:m.sender_email,created_at:m.created_at}));
+  scrollChat();
+  if(dmChannel) try{sb.removeChannel(dmChannel);}catch(e){} 
+  dmChannel=sb.channel(`dm-${[me.email,peerEmail].sort().join('-')}`)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'dm_messages'},payload=>{
+      const m=payload.new;
+      addMessageToUI({username:m.sender_email===me.email?me.username:peerUsername,message:m.content,sender_email:m.sender_email,created_at:m.created_at});
+    })
+    .on('broadcast',{event:'typing'},payload=>{
+      if(payload.eventType==='start') typingUsers.add(payload.username); else typingUsers.delete(payload.username);
+      updateTypingIndicator();
+    }).subscribe();
+}
+
+// Search/add friend
+$('addSearch').addEventListener('input',async()=>{
+  const q=$('addSearch').value.trim(); if(!q)return $('addResults').innerHTML='';
+  const { data }=await sb.from('users').select('email,username').ilike('username','%'+q+'%').neq('email',me.email);
+  $('addResults').innerHTML='';
+  data.forEach(u=>{
+    const div=document.createElement('div'); div.className='list-item';
+    div.innerHTML=`<div class="meta"><div class="name">${u.username}</div></div><button class="btn primary">Add</button>`;
+    const btn=div.querySelector('button'); btn.addEventListener('click',()=>sendRequest(u.email,u.username));
+    $('addResults').appendChild(div);
+  });
+});
+
+async function sendRequest(toEmail,toUsername){
+  await sb.from('friend_requests').insert({from_email:me.email,from_username:me.username,to_email:toEmail});
+  alert("Request sent to "+toUsername);
+}
 </script>
 </body>
 </html>
