@@ -28,113 +28,121 @@ header { background:#0f1524; padding:1rem; text-align:center; font-size:1.5rem; 
 <div id="messages"></div>
 
 <div id="input">
-  <input type="text" id="codeInput" placeholder="Enter your code...">
-  <button id="loginBtn">Enter Chat</button>
+  <input type="text" id="messageInput" placeholder="Type your message...">
+  <button id="sendBtn">Send</button>
 </div>
 
 <div id="authModal">
   <div id="authBox">
     <h2>Enter Code</h2>
-    <input type="text" id="codeInputModal" placeholder="Enter your code">
-    <button id="loginBtnModal">Enter Chat</button>
+    <input type="text" id="codeInput" placeholder="Enter your code">
+    <button id="loginBtn">Enter Chat</button>
   </div>
 </div>
 
-<!-- Load Supabase JS first -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-const supabaseUrl = 'https://azpgwbxillscpwrraprl.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6cGd3YnhpbGxzY3B3cnJhcHJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg1MjQsImV4cCI6MjA3MjYzNDUyNH0.h7ZDxtH4pB3K5IzRB9goLJ1ldrY6EGf7CWT-ELGQ0i0';
-const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+document.addEventListener('DOMContentLoaded', () => {
+  const supabaseUrl = 'https://azpgwbxillscpwrraprl.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6cGd3YnhpbGxzY3B3cnJhcHJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg1MjQsImV4cCI6MjA3MjYzNDUyNH0.h7ZDxtH4pB3K5IzRB9goLJ1ldrY6EGf7CWT-ELGQ0i0';
+  const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-let currentUser = null;
-const messagesEl = document.getElementById('messages');
-const messageInput = document.getElementById('messageInput');
-const sendBtn = document.getElementById('sendBtn');
+  let currentUser = null;
+  const messagesEl = document.getElementById('messages');
+  const messageInput = document.getElementById('messageInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const codeInput = document.getElementById('codeInput');
+  const loginBtn = document.getElementById('loginBtn');
+  const authModal = document.getElementById('authModal');
 
-// Helper function to append messages
-function appendMessage(message, type) {
-  const div = document.createElement('div');
-  div.className = 'message ' + type;
-  div.innerHTML = `<strong>${message.username}</strong>: ${message.message} <span class="timestamp">${new Date(message.created_at).toLocaleTimeString()}</span>`;
-  messagesEl.appendChild(div);
-  div.scrollIntoView();
-}
-
-// ------------------- LOGIN BY CODE -------------------
-async function loginWithCode(code) {
-  const { data, error } = await supabaseClient
-    .from('chat_codes')
-    .select('username')
-    .eq('code', code)
-    .single();
-
-  if(error || !data) {
-    alert('Invalid code');
-    return false;
+  // ------------------- HELPER -------------------
+  function appendMessage(message, type) {
+    const div = document.createElement('div');
+    div.className = 'message ' + type;
+    div.innerHTML = `<strong>${message.username}</strong>: ${message.message} <span class="timestamp">${new Date(message.created_at).toLocaleTimeString()}</span>`;
+    messagesEl.appendChild(div);
+    div.scrollIntoView();
   }
 
-  currentUser = { username: data.username, code };
-  localStorage.setItem('chatCode', code); // persist login
-  document.getElementById('authModal').style.display = 'none';
-  loadMessages();
-  subscribeMessages();
-  return true;
-}
+  async function loginWithCode(code) {
+    const { data, error } = await supabaseClient
+      .from('chat_codes')
+      .select('username')
+      .eq('code', code)
+      .single();
 
-// ------------------- CHECK LOCAL STORAGE -------------------
-const savedCode = localStorage.getItem('chatCode');
-if(savedCode) {
-  loginWithCode(savedCode);
-}
+    if (error || !data) {
+      alert('Invalid code');
+      return false;
+    }
 
-// ------------------- LOGIN BUTTON -------------------
-document.getElementById('loginBtnModal').onclick = () => {
-  const code = document.getElementById('codeInputModal').value.trim();
-  if(!code) return alert('Enter your code');
-  loginWithCode(code);
-};
+    currentUser = { username: data.username, code };
+    localStorage.setItem('chatCode', code);
+    authModal.style.display = 'none';
+    loadMessages();
+    subscribeMessages();
+    return true;
+  }
 
-// ------------------- SEND MESSAGE -------------------
-sendBtn.onclick = async () => {
-  if(!messageInput.value) return;
-  const newMessage = {
-    username: currentUser.username,
-    message: messageInput.value,
-    created_at: new Date().toISOString()
+  // ------------------- LOGIN -------------------
+  loginBtn.onclick = () => {
+    const code = codeInput.value.trim();
+    if (!code) return alert('Enter your code');
+    loginWithCode(code);
   };
 
-  appendMessage(newMessage, 'self'); // show instantly
-  await supabaseClient.from('global_messages').insert([newMessage]);
-  messageInput.value='';
-};
+  // ------------------- AUTO LOGIN -------------------
+  const savedCode = localStorage.getItem('chatCode');
+  if (savedCode) loginWithCode(savedCode);
 
-// ------------------- LOAD MESSAGES -------------------
-async function loadMessages(){
-  const { data } = await supabaseClient
-    .from('global_messages')
-    .select('*')
-    .order('created_at', { ascending: true });
+  // ------------------- SEND MESSAGE -------------------
+  async function sendMessage() {
+    if (!messageInput.value || !currentUser) return;
+    const newMessage = {
+      username: currentUser.username,
+      message: messageInput.value,
+      created_at: new Date().toISOString()
+    };
+    appendMessage(newMessage, 'self'); // instant
+    await supabaseClient.from('global_messages').insert([newMessage]);
+    messageInput.value = '';
+  }
 
-  messagesEl.innerHTML='';
-  data.forEach(m => {
-    const type = (m.username === currentUser.username) ? 'self' : 'other';
-    appendMessage(m, type);
+  sendBtn.onclick = sendMessage;
+
+  // Send on Enter key
+  messageInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendMessage();
   });
-}
 
-// ------------------- REALTIME -------------------
-function subscribeMessages(){
-  supabaseClient.channel('messages')
-    .on('postgres_changes', { event:'INSERT', schema:'public', table:'global_messages' }, payload => {
-      const m = payload.new;
-      if(m.username !== currentUser.username){
-        appendMessage(m, 'other');
-      }
-    })
-    .subscribe();
-}
+  // ------------------- LOAD MESSAGES -------------------
+  async function loadMessages() {
+    const { data } = await supabaseClient
+      .from('global_messages')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    messagesEl.innerHTML = '';
+    data.forEach(m => {
+      const type = (m.username === currentUser.username) ? 'self' : 'other';
+      appendMessage(m, type);
+    });
+  }
+
+  // ------------------- REALTIME -------------------
+  function subscribeMessages() {
+    supabaseClient.channel('messages')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'global_messages' }, payload => {
+        const m = payload.new;
+        if (m.username !== currentUser.username) {
+          appendMessage(m, 'other');
+        }
+      })
+      .subscribe();
+  }
+});
 </script>
+
 </body>
 </html>
