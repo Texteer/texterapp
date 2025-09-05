@@ -59,6 +59,9 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabase = Supabase.createClient(supabaseUrl, supabaseKey);
 
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('Supabase initialized', supabase);
+  
+document.addEventListener('DOMContentLoaded', () => {
   let currentUser = null;
   let currentChannel = 'global';
   const messagesEl = document.getElementById('messages');
@@ -191,6 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
 
 
 
