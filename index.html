@@ -55,7 +55,7 @@ body { margin:0; font-family:'Segoe UI',sans-serif; background:#0a0f1a; color:#f
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const supabaseUrl = 'https://azpgwbxillscpwrraprl.supabase.co';
-const supabaseKey = 'YOUR_SUPABASE_KEY';
+const supabaseKey = 'YOUR_SUPABASE_KEY'; // Replace with your actual key
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 let currentUser = null;
@@ -124,7 +124,7 @@ function setActiveChannel(activeDiv){
   if(activeDiv) activeDiv.classList.add('active');
 }
 
-// ------------------- MESSAGES -------------------
+// ------------------- LOAD MESSAGES -------------------
 async function loadMessages(){
   messagesEl.innerHTML='';
   let query;
