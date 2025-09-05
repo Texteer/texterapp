@@ -16,7 +16,7 @@ header { background:#0f1524; padding:1rem; text-align:center; font-size:1.5rem; 
 #input input { flex:1; padding:0.6rem 1rem; border-radius:20px 0 0 20px; border:none; background:#141a2c; color:#fff; }
 #input button { padding:0.6rem 1.2rem; border:none; border-radius:0 20px 20px 0; background:#0b78e3; color:#fff; cursor:pointer; font-weight:bold; }
 #authModal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:flex; align-items:center; justify-content:center; z-index:10; }
-#authBox { background:#101426; padding:2rem; border-radius:15px; width:320px; display:flex; flex-direction:column; box-shadow:0 5px 20px rgba(0,0,0,0.5);}
+#authBox { background:#101426; padding:2rem; border-radius:15px; width:320px; display:flex; flex-direction:column; box-shadow:0 5px 20px rgba(0,0,0,0.5); }
 #authBox input { margin-bottom:1rem; padding:0.6rem; border-radius:8px; border:none; background:#141a2c; color:#fff; }
 #authBox button { padding:0.6rem; border:none; border-radius:8px; background:#0b78e3; color:#fff; font-weight:bold; cursor:pointer; }
 </style>
@@ -41,11 +41,10 @@ header { background:#0f1524; padding:1rem; text-align:center; font-size:1.5rem; 
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const supabaseUrl = 'https://azpgwbxillscpwrraprl.supabase.co';
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6cGd3YnhpbGxzY3B3cnJhcHJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg1MjQsImV4cCI6MjA3MjYzNDUyNH0.h7ZDxtH4pB3K5IzRB9goLJ1ldrY6EGf7CWT-ELGQ0i0';
+  const supabaseKey = 'YOUR_ANON_KEY_HERE'; // Replace with your actual key
   const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
   let currentUser = null;
@@ -62,9 +61,10 @@ document.addEventListener('DOMContentLoaded', () => {
     div.className = 'message ' + type;
     div.innerHTML = `<strong>${message.username}</strong>: ${message.message} <span class="timestamp">${new Date(message.created_at).toLocaleTimeString()}</span>`;
     messagesEl.appendChild(div);
-    div.scrollIntoView();
+    messagesEl.scrollTop = messagesEl.scrollHeight;
   }
 
+  // ------------------- LOGIN -------------------
   async function loginWithCode(code) {
     const { data, error } = await supabaseClient
       .from('chat_codes')
@@ -80,38 +80,37 @@ document.addEventListener('DOMContentLoaded', () => {
     currentUser = { username: data.username, code };
     localStorage.setItem('chatCode', code);
     authModal.style.display = 'none';
-    loadMessages();
+    await loadMessages();
     subscribeMessages();
     return true;
   }
 
-  // ------------------- LOGIN -------------------
   loginBtn.onclick = () => {
     const code = codeInput.value.trim();
     if (!code) return alert('Enter your code');
     loginWithCode(code);
   };
 
-  // ------------------- AUTO LOGIN -------------------
   const savedCode = localStorage.getItem('chatCode');
   if (savedCode) loginWithCode(savedCode);
 
   // ------------------- SEND MESSAGE -------------------
   async function sendMessage() {
-    if (!messageInput.value || !currentUser) return;
+    const msg = messageInput.value.trim();
+    if (!msg || !currentUser) return;
+
     const newMessage = {
       username: currentUser.username,
-      message: messageInput.value,
+      message: msg,
       created_at: new Date().toISOString()
     };
+
     appendMessage(newMessage, 'self'); // instant
-    await supabaseClient.from('global_messages').insert([newMessage]);
     messageInput.value = '';
+    await supabaseClient.from('global_messages').insert([newMessage]);
   }
 
   sendBtn.onclick = sendMessage;
-
-  // Send on Enter key
   messageInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') sendMessage();
   });
@@ -132,13 +131,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ------------------- REALTIME -------------------
   function subscribeMessages() {
-    supabaseClient.channel('messages')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'global_messages' }, payload => {
-        const m = payload.new;
-        if (m.username !== currentUser.username) {
+    supabaseClient
+      .channel('public:global_messages')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'global_messages' },
+        (payload) => {
+          const m = payload.new;
+          if (!currentUser || m.username === currentUser.username) return;
           appendMessage(m, 'other');
         }
-      })
+      )
       .subscribe();
   }
 });
@@ -146,4 +149,3 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
-
