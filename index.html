@@ -8,10 +8,10 @@
 body { margin:0; font-family:'Segoe UI',sans-serif; background:#0a0f1a; color:#fff; display:flex; flex-direction:column; height:100vh; }
 header { background:#0f1524; padding:1rem; text-align:center; font-size:1.5rem; font-weight:bold; }
 #messages { flex:1; padding:1rem; overflow-y:auto; display:flex; flex-direction:column; gap:0.3rem; }
-.message { padding:0.6rem 1rem; border-radius:15px; max-width:65%; word-break:break-word; }
-.message.self { background:#0b78e3; align-self:flex-end; color:#fff; }
+.message { padding:0.6rem 1rem; border-radius:15px; max-width:65%; word-break:break-word; display:flex; align-items:center; }
+.message.self { background:#0b78e3; align-self:flex-end; color:#fff; flex-direction:row-reverse; }
 .message.other { background:#1c2335; align-self:flex-start; color:#fff; }
-.timestamp { font-size:0.65rem; color:#7a7a7a; margin-left:0.5rem; }
+.timestamp { font-size:0.65rem; color:#7a7a7a; margin-left:0.5rem; margin-right:0.5rem; }
 #input { display:flex; padding:0.5rem; background:#101426; border-top:1px solid #1c2335; }
 #input input { flex:1; padding:0.6rem 1rem; border-radius:20px 0 0 20px; border:none; background:#141a2c; color:#fff; }
 #input button { padding:0.6rem 1.2rem; border:none; border-radius:0 20px 20px 0; background:#0b78e3; color:#fff; cursor:pointer; font-weight:bold; }
@@ -19,12 +19,14 @@ header { background:#0f1524; padding:1rem; text-align:center; font-size:1.5rem; 
 #authBox { background:#101426; padding:2rem; border-radius:15px; width:320px; display:flex; flex-direction:column; box-shadow:0 5px 20px rgba(0,0,0,0.5); }
 #authBox input { margin-bottom:1rem; padding:0.6rem; border-radius:8px; border:none; background:#141a2c; color:#fff; }
 #authBox button { padding:0.6rem; border:none; border-radius:8px; background:#0b78e3; color:#fff; font-weight:bold; cursor:pointer; }
+#typingIndicator { font-size:0.85rem; color:#7a7a7a; padding-left:1rem; margin-bottom:0.2rem; height:18px; }
 </style>
 </head>
 <body>
 
 <header>Global Chat</header>
 
+<div id="typingIndicator"></div>
 <div id="messages"></div>
 
 <div id="input">
@@ -54,14 +56,59 @@ document.addEventListener('DOMContentLoaded', () => {
   const codeInput = document.getElementById('codeInput');
   const loginBtn = document.getElementById('loginBtn');
   const authModal = document.getElementById('authModal');
+  const typingIndicator = document.getElementById('typingIndicator');
 
-  // ------------------- HELPER -------------------
+  let typingUsers = new Set();
+  let typingTimeout;
+
+  // ------------------- HELPER FUNCTIONS -------------------
   function appendMessage(message, type) {
     const div = document.createElement('div');
     div.className = 'message ' + type;
-    div.innerHTML = `<strong>${message.username}</strong>: ${message.message} <span class="timestamp">${new Date(message.created_at).toLocaleTimeString()}</span>`;
+
+    const profileCircle = createProfileCircle(message.username);
+    div.appendChild(profileCircle);
+
+    const content = document.createElement('span');
+    content.innerHTML = `<strong>${message.username}</strong>: ${message.message} <span class="timestamp">${new Date(message.created_at).toLocaleTimeString()}</span>`;
+    div.appendChild(content);
+
     messagesEl.appendChild(div);
     messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function getInitials(name) {
+    return name.split(' ').map(n => n[0].toUpperCase()).join('').slice(0,2);
+  }
+
+  function createProfileCircle(username) {
+    const span = document.createElement('span');
+    span.style.cssText = `
+      display:inline-flex;
+      justify-content:center;
+      align-items:center;
+      width:30px;
+      height:30px;
+      border-radius:50%;
+      background:#0b78e3;
+      color:#fff;
+      font-weight:bold;
+      font-size:0.8rem;
+      margin-right:0.5rem;
+    `;
+    span.textContent = getInitials(username);
+    return span;
+  }
+
+  function updateTypingIndicator() {
+    if (typingUsers.size === 0) {
+      typingIndicator.textContent = '';
+      return;
+    }
+    const names = Array.from(typingUsers);
+    typingIndicator.textContent = names.length === 1
+      ? `${names[0]} is typing...`
+      : `${names.join(' and ')} are typing...`;
   }
 
   // ------------------- LOGIN -------------------
@@ -74,7 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
         .single();
 
       if (error || !data) {
-        console.log('Login error:', error);
         alert('Invalid code');
         return false;
       }
@@ -84,10 +130,11 @@ document.addEventListener('DOMContentLoaded', () => {
       authModal.style.display = 'none';
       await loadMessages();
       subscribeMessages();
+      subscribeTyping();
       return true;
     } catch (err) {
-      console.error('Login exception:', err);
       alert('Login failed, check console.');
+      console.error(err);
       return false;
     }
   }
@@ -112,15 +159,40 @@ document.addEventListener('DOMContentLoaded', () => {
       created_at: new Date().toISOString()
     };
 
-    appendMessage(newMessage, 'self'); // instant display
+    appendMessage(newMessage, 'self');
     messageInput.value = '';
-    const { error } = await supabaseClient.from('global_messages').insert([newMessage]);
-    if (error) console.error('Send message error:', error);
+    await supabaseClient.from('global_messages').insert([newMessage]);
+
+    // Remove typing status
+    await supabaseClient.from('typing_status').upsert({
+      username: currentUser.username,
+      typing: false,
+      updated_at: new Date().toISOString()
+    });
   }
 
   sendBtn.onclick = sendMessage;
   messageInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') sendMessage();
+  });
+
+  messageInput.addEventListener('input', async () => {
+    if (!currentUser) return;
+
+    await supabaseClient.from('typing_status').upsert({
+      username: currentUser.username,
+      typing: true,
+      updated_at: new Date().toISOString()
+    });
+
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(async () => {
+      await supabaseClient.from('typing_status').upsert({
+        username: currentUser.username,
+        typing: false,
+        updated_at: new Date().toISOString()
+      });
+    }, 2000);
   });
 
   // ------------------- LOAD MESSAGES -------------------
@@ -130,10 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .select('*')
       .order('created_at', { ascending: true });
 
-    if (error) {
-      console.error('Load messages error:', error);
-      return;
-    }
+    if (error) return console.error(error);
 
     messagesEl.innerHTML = '';
     data.forEach(m => {
@@ -142,22 +211,35 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ------------------- REALTIME -------------------
+  // ------------------- REALTIME MESSAGES -------------------
   function subscribeMessages() {
     if (window.messageChannel) window.messageChannel.unsubscribe();
 
     window.messageChannel = supabaseClient
       .channel('public:global_messages')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'global_messages' },
-        (payload) => {
-          const m = payload.new;
-          if (!currentUser || m.username === currentUser.username) return;
-          appendMessage(m, 'other');
-        }
-      )
-      .subscribe((status) => console.log('Realtime status:', status));
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'global_messages' }, payload => {
+        const m = payload.new;
+        if (!currentUser || m.username === currentUser.username) return;
+        appendMessage(m, 'other');
+      })
+      .subscribe();
+  }
+
+  // ------------------- REALTIME TYPING -------------------
+  function subscribeTyping() {
+    if (window.typingChannel) window.typingChannel.unsubscribe();
+
+    window.typingChannel = supabaseClient
+      .channel('public:typing_status')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'typing_status' }, payload => {
+        const { username, typing } = payload.new;
+        if (!currentUser || username === currentUser.username) return;
+
+        if (typing) typingUsers.add(username);
+        else typingUsers.delete(username);
+        updateTypingIndicator();
+      })
+      .subscribe();
   }
 });
 </script>
