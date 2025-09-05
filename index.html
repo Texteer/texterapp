@@ -5,32 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dark Chat App</title>
 <style>
-body { margin:0; font-family:sans-serif; background:#0b0f1a; color:#fff; }
-header { background:#101426; padding:1rem; display:flex; justify-content:space-between; align-items:center; }
-button { cursor:pointer; border:none; border-radius:4px; padding:0.5rem 1rem; }
-main { display:flex; height:90vh; }
-#friends { width:250px; background:#141a2c; padding:1rem; overflow-y:auto; }
-#chat { flex:1; display:flex; flex-direction:column; background:#0d1326; }
-#messages { flex:1; padding:1rem; overflow-y:auto; }
-#input { display:flex; padding:0.5rem; background:#101426; }
-#input input { flex:1; padding:0.5rem; border:none; border-radius:4px 0 0 4px; }
-#input button { background:#0b78e3; color:#fff; border-radius:0 4px 4px 0; }
-.message { margin-bottom:0.5rem; }
-.message.self { text-align:right; color:#0b78e3; }
-.friend { padding:0.5rem; border-bottom:1px solid #1c2335; cursor:pointer; }
-.friend:hover { background:#1c2335; }
-#typingIndicator { font-size:0.9rem; color:#7a7a7a; margin-bottom:0.5rem; }
+  body { margin:0; font-family:sans-serif; background:#0b0f1a; color:#fff; }
+  header { background:#101426; padding:1rem; display:flex; justify-content:space-between; align-items:center; }
+  main { display:flex; height:90vh; }
+  #friends { width:250px; background:#141a2c; padding:1rem; overflow-y:auto; }
+  #chat { flex:1; display:flex; flex-direction:column; background:#0d1326; }
+  #messages { flex:1; padding:1rem; overflow-y:auto; }
+  #input { display:flex; padding:0.5rem; background:#101426; }
+  #input input { flex:1; padding:0.5rem; border:none; border-radius:4px 0 0 4px; }
+  #input button { background:#0b78e3; color:#fff; border-radius:0 4px 4px 0; border:none; }
+  .message { margin-bottom:0.5rem; }
+  .message.self { text-align:right; color:#0b78e3; }
+  .friend { padding:0.5rem; border-bottom:1px solid #1c2335; cursor:pointer; display:flex; justify-content:space-between; }
+  .friend:hover { background:#1c2335; }
+  #typingIndicator { font-size:0.9rem; color:#7a7a7a; margin-bottom:0.5rem; }
+  /* Login/Signup modal */
+  #authModal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); display:flex; align-items:center; justify-content:center; z-index:10; }
+  #authBox { background:#101426; padding:2rem; border-radius:8px; width:300px; display:flex; flex-direction:column; }
+  #authBox input { margin-bottom:1rem; padding:0.5rem; border-radius:4px; border:none; }
+  #authBox button { padding:0.5rem; border:none; border-radius:4px; background:#0b78e3; color:#fff; cursor:pointer; margin-top:0.5rem; }
+  #toggleAuth { margin-top:1rem; text-align:center; color:#0b78e3; cursor:pointer; }
 </style>
 </head>
 <body>
 
 <header>
   <div>Dark Chat</div>
-  <div id="auth-buttons">
-    <button id="signup-btn">Sign Up</button>
-    <button id="login-btn">Login</button>
-    <button id="logout-btn" style="display:none;">Logout</button>
-  </div>
+  <button id="logout-btn" style="display:none;">Logout</button>
 </header>
 
 <main>
@@ -45,6 +46,18 @@ main { display:flex; height:90vh; }
   </div>
 </main>
 
+<!-- Auth Modal -->
+<div id="authModal">
+  <div id="authBox">
+    <h2 id="authTitle">Login</h2>
+    <input type="email" id="authEmail" placeholder="Email">
+    <input type="text" id="authUsername" placeholder="Username" style="display:none;">
+    <input type="password" id="authPassword" placeholder="Password">
+    <button id="authBtn">Login</button>
+    <div id="toggleAuth">Don't have an account? Sign Up</div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const supabaseUrl = 'https://azpgwbxillscpwrraprl.supabase.co';
@@ -53,139 +66,189 @@ const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 let currentUser = null;
 let activeChat = null;
-let chatType = 'public'; // 'public' or 'private'
+let chatType = 'public';
+let typingTimeout;
 
 // ----------------- AUTH -----------------
-async function signUp() {
-  const email = prompt("Email?");
-  const password = prompt("Password?");
-  const username = prompt("Username?");
-  const { data, error } = await supabase.auth.signUp({ email, password });
-  if (error) return alert(error.message);
-  await supabase.from('users').insert([{ id: data.user.id, username }]);
-  alert("Signed up! Please login.");
-}
+const authModal = document.getElementById('authModal');
+const authTitle = document.getElementById('authTitle');
+const authUsername = document.getElementById('authUsername');
+const authBtn = document.getElementById('authBtn');
+const toggleAuth = document.getElementById('toggleAuth');
 
-async function login() {
-  const email = prompt("Email?");
-  const password = prompt("Password?");
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return alert(error.message);
-  currentUser = data.user;
-  document.getElementById('auth-buttons').style.display = 'none';
-  document.getElementById('logout-btn').style.display = 'inline';
+let isLogin = true;
+
+toggleAuth.onclick = () => {
+  isLogin = !isLogin;
+  authTitle.textContent = isLogin ? 'Login' : 'Sign Up';
+  authBtn.textContent = isLogin ? 'Login' : 'Sign Up';
+  authUsername.style.display = isLogin ? 'none' : 'block';
+  toggleAuth.textContent = isLogin ? "Don't have an account? Sign Up" : "Already have an account? Login";
+};
+
+authBtn.onclick = async () => {
+  const email = document.getElementById('authEmail').value;
+  const password = document.getElementById('authPassword').value;
+  const username = document.getElementById('authUsername').value;
+
+  if(isLogin){
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if(error) return alert(error.message);
+    currentUser = data.user;
+    authModal.style.display = 'none';
+    document.getElementById('logout-btn').style.display = 'inline';
+    initApp();
+  } else {
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if(error) return alert(error.message);
+    await supabase.from('users').insert([{ id: data.user.id, username }]);
+    alert('Signed up! Please login.');
+  }
+};
+
+document.getElementById('logout-btn').onclick = async () => {
+  await supabase.auth.signOut();
+  location.reload();
+};
+
+// ----------------- INITIALIZE APP -----------------
+async function initApp(){
   loadFriends();
   loadMessages();
   subscribeMessages();
   subscribeTyping();
 }
 
-async function logout() {
-  await supabase.auth.signOut();
-  location.reload();
-}
-
-document.getElementById('signup-btn').onclick = signUp;
-document.getElementById('login-btn').onclick = login;
-document.getElementById('logout-btn').onclick = logout;
-
 // ----------------- FRIENDS -----------------
-async function loadFriends() {
-  const { data: friendsData } = await supabase.from('friends').select('user_id, friend_id, status, users!inner(username)').or(`user_id.eq.${currentUser.id},friend_id.eq.${currentUser.id}`);
+async function loadFriends(){
+  const { data: friendsData } = await supabase.from('friends').select('user_id,friend_id,status,users!inner(username)').or(`user_id.eq.${currentUser.id},friend_id.eq.${currentUser.id}`);
   const friendsDiv = document.getElementById('friends');
   friendsDiv.innerHTML = '';
-  friendsData.forEach(f => {
+  friendsData.forEach(f=>{
     const friendId = f.user_id === currentUser.id ? f.friend_id : f.user_id;
     const div = document.createElement('div');
-    div.textContent = f.users.username;
     div.className = 'friend';
-    div.onclick = () => openChat(friendId);
+    div.textContent = f.users.username + (f.status==='pending' && f.user_id!==currentUser.id ? ' (Accept)' : '');
+    div.onclick = async ()=>{
+      if(f.status==='pending' && f.user_id!==currentUser.id){
+        await supabase.from('friends').update({status:'accepted'}).eq('id',f.id);
+        loadFriends();
+      } else {
+        openChat(friendId);
+      }
+    };
     friendsDiv.appendChild(div);
   });
+
+  const addFriendBtn = document.createElement('button');
+  addFriendBtn.textContent = 'Add Friend';
+  addFriendBtn.onclick = async ()=>{
+    const email = prompt('Enter friend email:');
+    if(!email) return;
+    const { data: user } = await supabase.from('users').select('id').eq('email', email).single();
+    if(!user) return alert('User not found');
+    await supabase.from('friends').insert([{ user_id: currentUser.id, friend_id: user.id, status:'pending' }]);
+    loadFriends();
+  };
+  friendsDiv.appendChild(addFriendBtn);
 }
 
 // ----------------- MESSAGES -----------------
-async function loadMessages() {
-  if(chatType === 'public') {
-    const { data: msgs } = await supabase.from('public_messages').select('*').order('created_at', { ascending:true });
-    document.getElementById('messages').innerHTML = '';
-    msgs.forEach(displayMessage);
-  } else if(activeChat) {
-    const { data: msgs } = await supabase.from('messages').select('*').or(`(sender_id.eq.${currentUser.id},receiver_id.eq.${activeChat}),(sender_id.eq.${activeChat},receiver_id.eq.${currentUser.id})`).order('created_at', { ascending:true });
-    document.getElementById('messages').innerHTML = '';
-    msgs.forEach(displayMessage);
+async function loadMessages(){
+  if(chatType==='public'){
+    const { data: msgs } = await supabase.from('public_messages').select('*,users!inner(username)').order('created_at',{ascending:true});
+    document.getElementById('messages').innerHTML='';
+    msgs.forEach(m=>{
+      const div=document.createElement('div');
+      div.className='message'+(m.sender_id===currentUser.id?' self':'');
+      div.textContent=`${m.users.username}: ${m.message}`;
+      document.getElementById('messages').appendChild(div);
+      div.scrollIntoView();
+    });
+  } else if(activeChat){
+    const { data: msgs } = await supabase.from('messages').select('*,users!inner(username)').or(`(sender_id.eq.${currentUser.id},receiver_id.eq.${activeChat}),(sender_id.eq.${activeChat},receiver_id.eq.${currentUser.id})`).order('created_at',{ascending:true});
+    document.getElementById('messages').innerHTML='';
+    msgs.forEach(m=>{
+      const div=document.createElement('div');
+      div.className='message'+(m.sender_id===currentUser.id?' self':'');
+      div.textContent=`${m.users.username}: ${m.message}`;
+      document.getElementById('messages').appendChild(div);
+      div.scrollIntoView();
+    });
   }
 }
 
-function displayMessage(msg) {
-  const div = document.createElement('div');
-  div.className = 'message ' + (msg.sender_id === currentUser.id ? 'self' : '');
-  div.textContent = msg.message;
-  document.getElementById('messages').appendChild(div);
-  div.scrollIntoView();
-}
-
-document.getElementById('sendBtn').onclick = async () => {
-  const input = document.getElementById('messageInput');
+// ----------------- SEND MESSAGE -----------------
+document.getElementById('sendBtn').onclick=async()=>{
+  const input=document.getElementById('messageInput');
   if(!input.value) return;
-  if(chatType === 'public') {
+  if(chatType==='public'){
     await supabase.from('public_messages').insert([{ sender_id: currentUser.id, message: input.value }]);
-  } else if(activeChat) {
+  } else if(activeChat){
     await supabase.from('messages').insert([{ sender_id: currentUser.id, receiver_id: activeChat, message: input.value }]);
   }
-  input.value = '';
+  input.value='';
   setTyping(false);
-}
+};
 
-// ----------------- CHAT SELECTION -----------------
-function openChat(friendId) {
-  activeChat = friendId;
-  chatType = 'private';
+// ----------------- OPEN CHAT -----------------
+function openChat(friendId){
+  activeChat=friendId;
+  chatType='private';
   loadMessages();
 }
 
 // ----------------- REALTIME -----------------
-function subscribeMessages() {
-  // Private messages
-  supabase.channel('private_messages')
-    .on('postgres_changes', { event:'INSERT', schema:'public', table:'messages' }, payload => {
-      if(payload.new.sender_id === activeChat || payload.new.receiver_id === activeChat) displayMessage(payload.new);
+function subscribeMessages(){
+  supabase.channel('messages')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},payload=>{
+      const m=payload.new;
+      if(chatType==='private' && (m.sender_id===activeChat || m.receiver_id===activeChat)){
+        loadMessages();
+      }
     })
-    // Public messages
-    .on('postgres_changes', { event:'INSERT', schema:'public', table:'public_messages' }, payload => {
-      if(chatType==='public') displayMessage(payload.new);
-    })
-    .subscribe();
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'public_messages'},payload=>{
+      if(chatType==='public') loadMessages();
+    }).subscribe();
 }
 
 // ----------------- TYPING INDICATOR -----------------
-let typingTimeout;
-document.getElementById('messageInput').addEventListener('input', () => {
+document.getElementById('messageInput').addEventListener('input',()=>{
   setTyping(true);
   clearTimeout(typingTimeout);
-  typingTimeout = setTimeout(()=> setTyping(false), 2000);
+  typingTimeout=setTimeout(()=>setTyping(false),2000);
 });
 
-async function setTyping(state) {
-  if(chatType==='public') {
-    await supabase.from('typing').upsert({ user_id: currentUser.id, chat_type:'public', target_id:null, is_typing:state, updated_at: new Date() });
-  } else if(activeChat) {
-    await supabase.from('typing').upsert({ user_id: currentUser.id, chat_type:'private', target_id:activeChat, is_typing:state, updated_at: new Date() });
+async function setTyping(state){
+  if(chatType==='public'){
+    await supabase.from('typing').upsert({ user_id: currentUser.id, chat_type:'public', target_id:null, is_typing:state, updated_at:new Date() });
+  } else if(activeChat){
+    await supabase.from('typing').upsert({ user_id: currentUser.id, chat_type:'private', target_id:activeChat, is_typing:state, updated_at:new Date() });
   }
 }
 
-async function subscribeTyping() {
+async function subscribeTyping(){
   supabase.channel('typing')
-    .on('postgres_changes', { event:'UPDATE', schema:'public', table:'typing' }, payload => {
-      const t = payload.new;
-      if(chatType==='public' && t.chat_type==='public' && t.user_id!==currentUser.id) {
-        document.getElementById('typingIndicator').textContent = t.is_typing ? "Someone is typing..." : "";
-      } else if(chatType==='private' && t.chat_type==='private' && t.target_id===currentUser.id) {
-        document.getElementById('typingIndicator').textContent = t.is_typing ? "Friend is typing..." : "";
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'typing'},payload=>{
+      const t=payload.new;
+      if(chatType==='public' && t.chat_type==='public' && t.user_id!==currentUser.id){
+        document.getElementById('typingIndicator').textContent=t.is_typing?'Someone is typing...':'';
+      } else if(chatType==='private' && t.chat_type==='private' && t.target_id===currentUser.id){
+        document.getElementById('typingIndicator').textContent=t.is_typing?'Friend is typing...':'';
       }
-    })
-    .subscribe();
+    }).subscribe();
 }
+
+// ----------------- CHECK AUTH STATE -----------------
+supabase.auth.getSession().then(({ data })=>{
+  if(data.session && data.session.user){
+    currentUser=data.session.user;
+    authModal.style.display='none';
+    document.getElementById('logout-btn').style.display='inline';
+    initApp();
+  }
+});
 </script>
+
 </body>
 </html>
