@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Supabase Chat</title>
 <style>
-  /* Your styles here (unchanged for brevity, included from your original code) */
+  /* Your CSS styles (unchanged from your original code) */
   body {
     font-family: Arial, sans-serif;
     background: #0d1117;
@@ -59,8 +59,7 @@
     margin: 10px 0;
     border-radius: 5px;
   }
-  /* Additional styles from your code for layout and responsiveness omitted here for brevity, but included in your full code */
-  /* ... rest of your CSS ... */
+  /* Additional styles omitted for brevity, keep your existing layout styles here */
 </style>
 </head>
 <body>
@@ -88,7 +87,7 @@
     <div class="brand">Texter</div>
     <div class="me" id="meInfo">Signed in as —</div>
   </header>
-  <!-- Sidebar, chat, etc. -->
+  <!-- Sidebar -->
   <aside class="sidebar">
     <div class="section-title">Find friends</div>
     <div class="search">
@@ -103,6 +102,7 @@
     <div class="friends" id="friends"></div>
   </aside>
 
+  <!-- Chat section -->
   <section class="chat">
     <div class="chat-header">
       <div class="avatar" id="roomAvatar">GC</div>
@@ -115,13 +115,12 @@
     </div>
   </section>
 </div>
-
 </div>
 
-<!-- Supabase Script -->
+<!-- Include Supabase JS SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/supabase.min.js"></script>
 <script>
-  // Initialize Supabase client
+  // Initialize Supabase client first
   const supabaseUrl = "https://fhokwoazuhkwrkrweddd.supabase.co";
   const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZob2t3b2F6dWhrd3JrcndlZGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODk4NDUsImV4cCI6MjA3MjQ2NTg0NX0.oba9UV8YZ8wrB8Op2mAbRf2ns2-RGQRjY63wCLU5kKc";
   const supabase = supabase.createClient(supabaseUrl, supabaseKey);
@@ -153,7 +152,7 @@
     }
   })();
 
-  // Authentication handlers
+  // Login button click handler
   document.getElementById('loginBtn').onclick = async () => {
     const email = $('#loginEmail').value.trim();
     const password = $('#loginPassword').value.trim();
@@ -169,7 +168,7 @@
     }
   };
 
-  // Handle auth state changes (e.g., logout)
+  // Monitor auth state changes
   supabase.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_OUT') {
       currentUser = null;
@@ -180,7 +179,7 @@
     }
   });
 
-  // After login: fetch username or prompt creation
+  // After login function
   async function afterLogin(user) {
     currentUser = user;
     // Check if username exists
@@ -231,7 +230,7 @@
     initApp();
   };
 
-  // Initialize main app
+  // Initialize main app after login / username setup
   async function initApp() {
     showSection('main-app');
     $('#meInfo').textContent = `${currentUsername} (${currentUser.email})`;
@@ -241,7 +240,7 @@
     loadGlobalMessages();
     subscribeGlobal();
 
-    // Setup message sending
+    // Setup message send on Enter key
     $('#composerInput').addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !isMobile()) {
         e.preventDefault();
@@ -260,12 +259,10 @@
     $('#roomAvatar').textContent = initialsTxt;
   }
 
-  // Send message
+  // Send message function
   async function sendMessage() {
     const message = $('#composerInput').value.trim();
-    if (!message) return;
-
-    if (!currentUser || !currentUsername) return;
+    if (!message || !currentUser || !currentUsername) return;
 
     if (currentView?.type === 'global') {
       const { error } = await supabase
@@ -299,7 +296,7 @@
     data.forEach(m => appendBubble(msgDiv, m.username, m.sender_email === currentUser.email, m.message));
   }
 
-  // Subscribe to new global messages
+  // Subscribe to new messages in global chat
   function subscribeGlobal() {
     supabase
       .channel('global-feed')
@@ -311,7 +308,7 @@
       .subscribe();
   }
 
-  // Open direct message
+  // Open DM chat
   async function openDM(peerEmail, peerUsername) {
     if (currentView?.type === 'dm' && currentView.peerEmail === peerEmail) {
       // toggle back to global
@@ -330,7 +327,6 @@
       .select('*')
       .or(`and(sender_email.eq.${currentUser.email},receiver_email.eq.${peerEmail}),and(sender_email.eq.${peerEmail},receiver_email.eq.${currentUser.email})`)
       .order('created_at', { ascending: true });
-
     if (error) {
       console.error(error);
       return;
@@ -392,7 +388,7 @@
             <button class="btn primary">Add</button>
           </div>`;
         item.querySelector('button').onclick = () => sendFriendRequest(u.email);
-        box.appendChild(item);
+        $('#searchResults').appendChild(item);
       });
   }
 
@@ -416,8 +412,7 @@
   }
 
   async function loadRequests() {
-    const box = $('#requests');
-    box.innerHTML = '';
+    $('#requests').innerHTML = '';
     const { data, error } = await supabase
       .from('friends')
       .select('id, requester_email')
@@ -461,8 +456,7 @@
   }
 
   async function loadFriends() {
-    const box = $('#friends');
-    box.innerHTML = '';
+    $('#friends').innerHTML = '';
 
     const { data } = await supabase
       .from('friends')
