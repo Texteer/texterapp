@@ -9,9 +9,8 @@ body { margin:0; font-family:'Segoe UI',sans-serif; background:#0a0f1a; color:#f
 #sidebar { width:250px; background:#101426; display:flex; flex-direction:column; border-right:1px solid #1c2335; }
 #sidebar h2 { padding:1rem; margin:0; border-bottom:1px solid #1c2335; }
 #channels { flex:1; overflow-y:auto; }
-.channel { display:flex; align-items:center; padding:0.5rem 1rem; cursor:pointer; border-bottom:1px solid #1c2335; transition:0.2s; }
-.channel:hover { background:#141a2c; }
-.channel.active { background:#141a2c; font-weight:bold; }
+.channel { display:flex; align-items:center; padding:0.5rem 1rem; cursor:pointer; border-bottom:1px solid #1c2335; transition:background 0.2s; }
+.channel:hover, .channel.active { background:#141a2c; font-weight:bold; }
 .profile-circle { width:32px; height:32px; border-radius:50%; background:#0b78e3; display:flex; align-items:center; justify-content:center; margin-right:0.5rem; font-weight:bold; flex-shrink:0; }
 #main { flex:1; display:flex; flex-direction:column; }
 #messages { flex:1; padding:1rem; overflow-y:auto; display:flex; flex-direction:column; gap:0.3rem; }
@@ -55,163 +54,150 @@ body { margin:0; font-family:'Segoe UI',sans-serif; background:#0a0f1a; color:#f
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const supabaseUrl = 'https://azpgwbxillscpwrraprl.supabase.co';
-  const supabaseKey = 'YOUR_SUPABASE_KEY_HERE';
-  const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+const supabaseUrl = 'https://azpgwbxillscpwrraprl.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6cGd3YnhpbGxzY3B3cnJhcHJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg1MjQsImV4cCI6MjA3MjYzNDUyNH0.h7ZDxtH4pB3K5IzRB9goLJ1ldrY6EGf7CWT-ELGQ0i0';
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-  let currentUser = null;
-  let currentChannel = 'global';
+let currentUser = null;
+let currentChannel = 'global';
+const messagesEl = document.getElementById('messages');
+const messageInput = document.getElementById('messageInput');
+const sendBtn = document.getElementById('sendBtn');
+const typingIndicator = document.getElementById('typingIndicator');
+const channelsEl = document.getElementById('channels');
+const authModal = document.getElementById('authModal');
+const codeInput = document.getElementById('codeInput');
+const loginBtn = document.getElementById('loginBtn');
 
-  const messagesEl = document.getElementById('messages');
-  const messageInput = document.getElementById('messageInput');
-  const sendBtn = document.getElementById('sendBtn');
-  const typingIndicator = document.getElementById('typingIndicator');
-  const channelsEl = document.getElementById('channels');
-  const authModal = document.getElementById('authModal');
-  const codeInput = document.getElementById('codeInput');
-  const loginBtn = document.getElementById('loginBtn');
+function appendMessage(msg,type){
+  const div = document.createElement('div');
+  div.className = 'message '+type;
+  div.innerHTML = `<strong>${msg.username||msg.sender}</strong>: ${msg.message} <span class="timestamp">${new Date(msg.created_at).toLocaleTimeString()}</span>`;
+  messagesEl.appendChild(div);
+  div.scrollIntoView();
+}
 
-  // ------------------- HELPERS -------------------
-  function appendMessage(msg, type){
+async function loginWithCode(code){
+  const { data, error } = await supabase.from('chat_codes').select('username').eq('code', code).single();
+  if(error || !data){ alert('Invalid code'); return false; }
+  currentUser = { username: data.username, code };
+  localStorage.setItem('chatCode', code);
+  authModal.style.display='none';
+  await loadSidebar();
+  loadMessages();
+  subscribeMessages();
+  return true;
+}
+
+// Login button
+loginBtn.onclick = ()=>{ const code = codeInput.value.trim(); if(!code) return alert('Enter your code'); loginWithCode(code); };
+
+// Auto-login
+const savedCode = localStorage.getItem('chatCode');
+if(savedCode) loginWithCode(savedCode);
+
+// Load sidebar channels
+async function loadSidebar(){
+  channelsEl.innerHTML='';
+  // Global channel
+  const globalDiv = document.createElement('div');
+  globalDiv.className='channel';
+  globalDiv.innerHTML='<div class="profile-circle">G</div>Global Chat';
+  globalDiv.onclick=()=>{ currentChannel='global'; setActiveChannel(globalDiv); loadMessages(); }
+  channelsEl.appendChild(globalDiv);
+  if(currentChannel==='global') setActiveChannel(globalDiv);
+
+  // Other users
+  const { data: users } = await supabase.from('chat_codes').select('*');
+  users.forEach(user=>{
+    if(user.username===currentUser.username) return;
     const div = document.createElement('div');
-    div.className = 'message ' + type;
-    div.innerHTML = `<strong>${msg.username||msg.sender}</strong>: ${msg.message} <span class="timestamp">${new Date(msg.created_at).toLocaleTimeString()}</span>`;
-    messagesEl.appendChild(div);
-    div.scrollIntoView();
-  }
-
-  function setActiveChannel(activeDiv){
-    document.querySelectorAll('#channels .channel').forEach(d=>d.classList.remove('active'));
-    if(activeDiv) activeDiv.classList.add('active');
-  }
-
-  // ------------------- LOGIN -------------------
-  async function loginWithCode(code){
-    const { data, error } = await supabaseClient
-      .from('chat_codes')
-      .select('username')
-      .eq('code', code)
-      .single();
-    if(error || !data){ alert('Invalid code'); return; }
-
-    currentUser = { username: data.username, code };
-    localStorage.setItem('chatCode', code);
-    authModal.style.display = 'none';
-
-    await loadSidebar();
-    loadMessages();
-    subscribeMessages();
-    subscribeTyping();
-  }
-
-  loginBtn.onclick = ()=> {
-    const code = codeInput.value.trim();
-    if(!code) return alert('Enter your code');
-    loginWithCode(code);
-  };
-
-  const savedCode = localStorage.getItem('chatCode');
-  if(savedCode) loginWithCode(savedCode);
-
-  // ------------------- LOAD SIDEBAR -------------------
-  async function loadSidebar(){
-    channelsEl.innerHTML='';
-
-    // Global channel
-    const globalDiv = document.createElement('div');
-    globalDiv.className='channel';
-    globalDiv.innerHTML='<div class="profile-circle">G</div>Global Chat';
-    globalDiv.onclick = ()=>{ currentChannel='global'; setActiveChannel(globalDiv); loadMessages(); };
-    channelsEl.appendChild(globalDiv);
-    if(currentChannel==='global') setActiveChannel(globalDiv);
-
-    // Users
-    const { data: users } = await supabaseClient.from('chat_codes').select('*');
-    users.forEach(user=>{
-      if(user.username === currentUser.username) return;
-      const div = document.createElement('div');
-      div.className='channel';
-      div.innerHTML = `<div class="profile-circle">${user.username[0].toUpperCase()}</div>${user.username}`;
-      div.onclick = ()=>{ currentChannel=user.username; setActiveChannel(div); loadMessages(); };
-      channelsEl.appendChild(div);
-    });
-  }
-
-  // ------------------- MESSAGES -------------------
-  async function loadMessages(){
-    messagesEl.innerHTML='';
-    let query;
-    if(currentChannel==='global'){
-      query = supabaseClient.from('global_messages').select('*').order('created_at',{ascending:true});
-    } else {
-      query = supabaseClient.from('private_messages')
-        .select('*')
-        .or(`and(sender.eq.${currentUser.username},recipient.eq.${currentChannel}),and(sender.eq.${currentChannel},recipient.eq.${currentUser.username})`)
-        .order('created_at',{ascending:true});
-    }
-    const { data } = await query;
-    data.forEach(m => {
-      const type = (m.username===currentUser.username || m.sender===currentUser.username)?'self':'other';
-      appendMessage(m,type);
-    });
-  }
-
-  async function sendMessage(){
-    if(!messageInput.value || !currentUser) return;
-    const msgObj = { username: currentUser.username, message: messageInput.value, created_at: new Date().toISOString() };
-    appendMessage(msgObj,'self');
-
-    if(currentChannel==='global'){
-      await supabaseClient.from('global_messages').insert([msgObj]);
-    } else {
-      await supabaseClient.from('private_messages').insert([{ sender: currentUser.username, recipient: currentChannel, message: msgObj.message, created_at: msgObj.created_at }]);
-    }
-    messageInput.value='';
-  }
-
-  sendBtn.onclick = sendMessage;
-  messageInput.addEventListener('keypress', e => { if(e.key==='Enter') sendMessage(); });
-
-  // ------------------- REALTIME -------------------
-  function subscribeMessages(){
-    // Global
-    supabaseClient.channel('global')
-      .on('postgres_changes',{ event:'INSERT', schema:'public', table:'global_messages' }, payload=>{
-        if(currentChannel==='global' && payload.new.username!==currentUser.username)
-          appendMessage(payload.new,'other');
-      }).subscribe();
-
-    // Private
-    supabaseClient.channel('private')
-      .on('postgres_changes',{ event:'INSERT', schema:'public', table:'private_messages' }, payload=>{
-        const m = payload.new;
-        const isRelevant = (m.sender===currentUser.username && m.recipient===currentChannel) || (m.recipient===currentUser.username && m.sender===currentChannel);
-        if(isRelevant) appendMessage({username:m.sender,message:m.message,created_at:m.created_at}, m.sender===currentUser.username?'self':'other');
-      }).subscribe();
-  }
-
-  // ------------------- TYPING -------------------
-  let typingTimeout;
-  messageInput.addEventListener('input', async ()=>{
-    if(!currentUser) return;
-    const channel = currentChannel==='global'?'global':currentChannel;
-    await supabaseClient.from('typing_status').upsert([{ username: currentUser.username, channel, is_typing:true, updated_at:new Date().toISOString() }]);
-    clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(async ()=>{
-      await supabaseClient.from('typing_status').upsert([{ username: currentUser.username, channel, is_typing:false, updated_at:new Date().toISOString() }]);
-    },2000);
+    div.className='channel';
+    div.innerHTML=`<div class="profile-circle">${user.username[0].toUpperCase()}</div>${user.username}`;
+    div.onclick=()=>{ currentChannel=user.username; setActiveChannel(div); loadMessages(); }
+    channelsEl.appendChild(div);
   });
+}
 
-  async function subscribeTyping(){
-    supabaseClient.channel('typing')
-      .on('postgres_changes',{ event:'UPDATE', schema:'public', table:'typing_status' }, payload=>{
-        const t = payload.new;
-        if(t.channel!==currentChannel || t.username===currentUser.username) return;
-        typingIndicator.textContent = t.is_typing?`${t.username} is typing...`:'';
-      }).subscribe();
+// Highlight active channel
+function setActiveChannel(activeDiv){
+  document.querySelectorAll('#channels .channel').forEach(div=>div.classList.remove('active'));
+  if(activeDiv) activeDiv.classList.add('active');
+}
+
+// Load messages
+async function loadMessages(){
+  messagesEl.innerHTML='';
+  let query;
+  if(currentChannel==='global'){
+    query = supabase.from('global_messages').select('*').order('created_at',{ascending:true});
+  } else {
+    query = supabase.from('private_messages').select('*')
+      .or(`and(sender.eq.${currentUser.username},recipient.eq.${currentChannel}),and(sender.eq.${currentChannel},recipient.eq.${currentUser.username})`)
+      .order('created_at',{ascending:true});
   }
+  const { data } = await query;
+  data.forEach(msg=>{
+    const type = (msg.username===currentUser.username || msg.sender===currentUser.username)?'self':'other';
+    appendMessage(msg,type);
+  });
+}
+
+// Send message
+async function sendMessage(){
+  if(!messageInput.value) return;
+  const msgObj = { username: currentUser.username, message: messageInput.value, created_at: new Date().toISOString() };
+  appendMessage(msgObj,'self');
+  if(currentChannel==='global'){
+    await supabase.from('global_messages').insert([msgObj]);
+  } else {
+    await supabase.from('private_messages').insert([{sender:currentUser.username,recipient:currentChannel,message:msgObj.message,created_at:msgObj.created_at}]);
+  }
+  messageInput.value='';
+}
+
+sendBtn.onclick=sendMessage;
+messageInput.addEventListener('keypress',e=>{ if(e.key==='Enter') sendMessage(); });
+
+// Subscribe realtime messages
+function subscribeMessages(){
+  // Global
+  supabase.channel('global')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'global_messages'},payload=>{
+      if(currentChannel==='global' && payload.new.username!==currentUser.username)
+        appendMessage(payload.new,'other');
+    }).subscribe();
+
+  // Private
+  supabase.channel('private')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'private_messages'},payload=>{
+      const m = payload.new;
+      const isRelevant=(m.sender===currentUser.username && m.recipient===currentChannel)||(m.recipient===currentUser.username && m.sender===currentChannel);
+      if(isRelevant) appendMessage({username:m.sender,message:m.message,created_at:m.created_at}, m.sender===currentUser.username?'self':'other');
+    }).subscribe();
+}
+
+// Typing indicator
+let typingTimeout;
+messageInput.addEventListener('input',async ()=>{
+  if(!currentUser) return;
+  const channel=currentChannel==='global'?'global':currentChannel;
+  await supabase.from('typing_status').upsert([{username:currentUser.username,channel,is_typing:true,updated_at:new Date().toISOString()}]);
+  clearTimeout(typingTimeout);
+  typingTimeout=setTimeout(async ()=>{
+    await supabase.from('typing_status').upsert([{username:currentUser.username,channel,is_typing:false,updated_at:new Date().toISOString()}]);
+  },2000);
 });
+
+// Subscribe typing
+async function subscribeTyping(){
+  supabase.channel('typing')
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'typing_status'},payload=>{
+      const t=payload.new;
+      if(t.channel!==currentChannel || t.username===currentUser.username) return;
+      typingIndicator.textContent = t.is_typing?`${t.username} is typing...`:'';
+    }).subscribe();
+}
 </script>
 </body>
 </html>
