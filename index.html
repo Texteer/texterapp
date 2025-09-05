@@ -47,7 +47,7 @@ header { background:#0f1524; padding:1rem; text-align:center; font-size:1.5rem; 
   // ------------------- SUPABASE INITIALIZATION -------------------
   const supabaseUrl = 'https://azpgwbxillscpwrraprl.supabase.co';
   const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6cGd3YnhpbGxzY3B3cnJhcHJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg1MjQsImV4cCI6MjA3MjYzNDUyNH0.h7ZDxtH4pB3K5IzRB9goLJ1ldrY6EGf7CWT-ELGQ0i0';
-  const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+  const supabase = Supabase.createClient(supabaseUrl, supabaseKey);
 
   let currentUser = null;
   const messagesEl = document.getElementById('messages');
@@ -58,7 +58,7 @@ header { background:#0f1524; padding:1rem; text-align:center; font-size:1.5rem; 
   document.getElementById('loginBtn').onclick = () => {
     const username = document.getElementById('usernameInput').value.trim();
     if(!username) return alert('Enter a username');
-    currentUser = { username, id: Date.now() }; // simple client-side user
+    currentUser = { username, id: Date.now() };
     document.getElementById('authModal').style.display = 'none';
     loadMessages();
     subscribeMessages();
