@@ -5,20 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Global Chat</title>
 <style>
-  body { margin:0; font-family:'Segoe UI',sans-serif; background:#0a0f1a; color:#fff; display:flex; flex-direction:column; height:100vh; }
-  header { background:#0f1524; padding:1rem; text-align:center; font-size:1.5rem; font-weight:bold; }
-  #messages { flex:1; padding:1rem; overflow-y:auto; display:flex; flex-direction:column; gap:0.3rem; }
-  .message { padding:0.6rem 1rem; border-radius:15px; max-width:65%; word-break:break-word; }
-  .message.self { background:#0b78e3; align-self:flex-end; color:#fff; }
-  .message.other { background:#1c2335; align-self:flex-start; color:#fff; }
-  .timestamp { font-size:0.65rem; color:#7a7a7a; margin-left:0.5rem; }
-  #input { display:flex; padding:0.5rem; background:#101426; border-top:1px solid #1c2335; }
-  #input input { flex:1; padding:0.6rem 1rem; border-radius:20px 0 0 20px; border:none; background:#141a2c; color:#fff; }
-  #input button { padding:0.6rem 1.2rem; border:none; border-radius:0 20px 20px 0; background:#0b78e3; color:#fff; cursor:pointer; font-weight:bold; }
-  #authModal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:flex; align-items:center; justify-content:center; z-index:10; }
-  #authBox { background:#101426; padding:2rem; border-radius:15px; width:320px; display:flex; flex-direction:column; box-shadow:0 5px 20px rgba(0,0,0,0.5);}
-  #authBox input { margin-bottom:1rem; padding:0.6rem; border-radius:8px; border:none; background:#141a2c; color:#fff; }
-  #authBox button { padding:0.6rem; border:none; border-radius:8px; background:#0b78e3; color:#fff; font-weight:bold; cursor:pointer; }
+body { margin:0; font-family:'Segoe UI',sans-serif; background:#0a0f1a; color:#fff; display:flex; flex-direction:column; height:100vh; }
+header { background:#0f1524; padding:1rem; text-align:center; font-size:1.5rem; font-weight:bold; }
+#messages { flex:1; padding:1rem; overflow-y:auto; display:flex; flex-direction:column; gap:0.3rem; }
+.message { padding:0.6rem 1rem; border-radius:15px; max-width:65%; word-break:break-word; }
+.message.self { background:#0b78e3; align-self:flex-end; color:#fff; }
+.message.other { background:#1c2335; align-self:flex-start; color:#fff; }
+.timestamp { font-size:0.65rem; color:#7a7a7a; margin-left:0.5rem; }
+#input { display:flex; padding:0.5rem; background:#101426; border-top:1px solid #1c2335; }
+#input input { flex:1; padding:0.6rem 1rem; border-radius:20px 0 0 20px; border:none; background:#141a2c; color:#fff; }
+#input button { padding:0.6rem 1.2rem; border:none; border-radius:0 20px 20px 0; background:#0b78e3; color:#fff; cursor:pointer; font-weight:bold; }
+#authModal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:flex; align-items:center; justify-content:center; z-index:10; }
+#authBox { background:#101426; padding:2rem; border-radius:15px; width:320px; display:flex; flex-direction:column; box-shadow:0 5px 20px rgba(0,0,0,0.5);}
+#authBox input { margin-bottom:1rem; padding:0.6rem; border-radius:8px; border:none; background:#141a2c; color:#fff; }
+#authBox button { padding:0.6rem; border:none; border-radius:8px; background:#0b78e3; color:#fff; font-weight:bold; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -32,7 +32,6 @@
   <button id="sendBtn">Send</button>
 </div>
 
-<!-- Login Modal -->
 <div id="authModal">
   <div id="authBox">
     <h2>Enter Username</h2>
@@ -41,9 +40,11 @@
   </div>
 </div>
 
+<!-- Load Supabase JS first -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
-  // ---------------- SUPABASE ----------------
+  // ------------------- SUPABASE INITIALIZATION -------------------
   const supabaseUrl = 'https://azpgwbxillscpwrraprl.supabase.co';
   const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6cGd3YnhpbGxzY3B3cnJhcHJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg1MjQsImV4cCI6MjA3MjYzNDUyNH0.h7ZDxtH4pB3K5IzRB9goLJ1ldrY6EGf7CWT-ELGQ0i0';
   const supabase = supabase.createClient(supabaseUrl, supabaseKey);
@@ -53,24 +54,24 @@
   const messageInput = document.getElementById('messageInput');
   const sendBtn = document.getElementById('sendBtn');
 
-  // ---------------- LOGIN ----------------
+  // ------------------- LOGIN -------------------
   document.getElementById('loginBtn').onclick = () => {
     const username = document.getElementById('usernameInput').value.trim();
     if(!username) return alert('Enter a username');
-    currentUser = { username, id: Date.now() }; // Simple client-side user
+    currentUser = { username, id: Date.now() }; // simple client-side user
     document.getElementById('authModal').style.display = 'none';
     loadMessages();
     subscribeMessages();
   };
 
-  // ---------------- SEND MESSAGE ----------------
+  // ------------------- SEND MESSAGE -------------------
   sendBtn.onclick = async () => {
     if(!messageInput.value) return;
     await supabase.from('global_messages').insert([{ username: currentUser.username, message: messageInput.value }]);
     messageInput.value='';
   };
 
-  // ---------------- LOAD MESSAGES ----------------
+  // ------------------- LOAD MESSAGES -------------------
   async function loadMessages(){
     const { data } = await supabase.from('global_messages').select('*').order('created_at',{ascending:true});
     messagesEl.innerHTML='';
@@ -83,7 +84,7 @@
     });
   }
 
-  // ---------------- REALTIME ----------------
+  // ------------------- REALTIME -------------------
   function subscribeMessages(){
     supabase.channel('messages')
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'global_messages'},payload=>{
