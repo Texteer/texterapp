@@ -47,14 +47,21 @@ header { background:#0f1524; padding:1rem; text-align:center; font-size:1.5rem; 
   // ------------------- SUPABASE INITIALIZATION -------------------
   const supabaseUrl = 'https://azpgwbxillscpwrraprl.supabase.co';
   const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6cGd3YnhpbGxzY3B3cnJhcHJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg1MjQsImV4cCI6MjA3MjYzNDUyNH0.h7ZDxtH4pB3K5IzRB9goLJ1ldrY6EGf7CWT-ELGQ0i0';
-  
-  // Use the correct lowercase 'supabase' from the CDN
   const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
   let currentUser = null;
   const messagesEl = document.getElementById('messages');
   const messageInput = document.getElementById('messageInput');
   const sendBtn = document.getElementById('sendBtn');
+
+  // ------------------- HELPER FUNCTION TO APPEND MESSAGE -------------------
+  function appendMessage(message, type) {
+    const div = document.createElement('div');
+    div.className = 'message ' + type;
+    div.innerHTML = `<strong>${message.username}</strong>: ${message.message} <span class="timestamp">${new Date(message.created_at).toLocaleTimeString()}</span>`;
+    messagesEl.appendChild(div);
+    div.scrollIntoView();
+  }
 
   // ------------------- LOGIN -------------------
   document.getElementById('loginBtn').onclick = () => {
@@ -69,7 +76,19 @@ header { background:#0f1524; padding:1rem; text-align:center; font-size:1.5rem; 
   // ------------------- SEND MESSAGE -------------------
   sendBtn.onclick = async () => {
     if(!messageInput.value) return;
-    await supabaseClient.from('global_messages').insert([{ username: currentUser.username, message: messageInput.value }]);
+
+    const newMessage = {
+      username: currentUser.username,
+      message: messageInput.value,
+      created_at: new Date().toISOString()
+    };
+
+    // Show instantly
+    appendMessage(newMessage, 'self');
+
+    // Send to Supabase
+    await supabaseClient.from('global_messages').insert([newMessage]);
+
     messageInput.value='';
   };
 
@@ -78,25 +97,22 @@ header { background:#0f1524; padding:1rem; text-align:center; font-size:1.5rem; 
     const { data } = await supabaseClient.from('global_messages').select('*').order('created_at',{ascending:true});
     messagesEl.innerHTML='';
     data.forEach(m => {
-      const div = document.createElement('div');
-      div.className = 'message '+(m.username===currentUser.username ? 'self':'other');
-      div.innerHTML = `<strong>${m.username}</strong>: ${m.message} <span class="timestamp">${new Date(m.created_at).toLocaleTimeString()}</span>`;
-      messagesEl.appendChild(div);
-      div.scrollIntoView();
+      const type = (m.username === currentUser.username) ? 'self' : 'other';
+      appendMessage(m, type);
     });
   }
 
   // ------------------- REALTIME -------------------
   function subscribeMessages(){
     supabaseClient.channel('messages')
-      .on('postgres_changes',{event:'INSERT',schema:'public',table:'global_messages'},payload=>{
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'global_messages' }, payload => {
         const m = payload.new;
-        const div = document.createElement('div');
-        div.className = 'message '+(m.username===currentUser.username ? 'self':'other');
-        div.innerHTML = `<strong>${m.username}</strong>: ${m.message} <span class="timestamp">${new Date(m.created_at).toLocaleTimeString()}</span>`;
-        messagesEl.appendChild(div);
-        div.scrollIntoView();
-      }).subscribe();
+        // Only append messages from other users
+        if(m.username !== currentUser.username){
+          appendMessage(m, 'other');
+        }
+      })
+      .subscribe();
   }
 </script>
 
