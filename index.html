@@ -58,7 +58,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const supabaseUrl = 'https://azpgwbxillscpwrraprl.supabase.co';
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6cGd3YnhpbGxzY3B3cnJhcHJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg1MjQsImV4cCI6MjA3MjYzNDUyNH0.h7ZDxtH4pB3K5IzRB9goLJ1ldrY6EGf7CWT-ELGQ0i0';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6cGd3YnhpbGxzY3B3cnJhcHJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg1MjQsImV4cCI6MjA3MjYzNDUyNH0.h7ZDxtH4pB3K5IzRB9goLJ1ldrY6EGf7CWT-ELGQ0i0'; // ⚠️ replace with your anon key
   const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
   const messagesEl = document.getElementById('messages');
@@ -92,7 +92,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if(error || !data){alert('Invalid code'); return;}
     currentUser={ username:data.username, code }; localStorage.setItem('chatCode', code); authModal.style.display='none';
 
-    // mark online
     await supabaseClient.from('online_users').upsert({ username:currentUser.username,last_seen:new Date().toISOString() });
     loadUsers(); loadMessages(); subscribeMessages(); subscribeTyping(); subscribePresence();
   }
@@ -118,9 +117,19 @@ document.addEventListener('DOMContentLoaded', () => {
   messageInput.addEventListener('keypress',e=>{if(e.key==='Enter')sendMessage();});
 
   async function loadMessages(){
-    const { data } = await supabaseClient.from('global_messages').select('*').order('created_at',{ascending:true});
     messagesEl.innerHTML='';
-    data.forEach(m=>{appendMessage(m,(m.username===currentUser.username)?'self':'other');});
+    if(currentChat.type==='global'){
+      chatHeader.textContent="Global Chat";
+      const { data } = await supabaseClient.from('global_messages').select('*').order('created_at',{ascending:true});
+      data.forEach(m=>{appendMessage(m,(m.username===currentUser.username)?'self':'other');});
+    }else{
+      chatHeader.textContent=`Chat with ${currentChat.target}`;
+      const { data } = await supabaseClient.from('private_messages')
+        .select('*')
+        .or(`and(sender.eq.${currentUser.username},receiver.eq.${currentChat.target}),and(sender.eq.${currentChat.target},receiver.eq.${currentUser.username})`)
+        .order('created_at',{ascending:true});
+      data.forEach(m=>appendMessage({username:m.sender,message:m.message,created_at:m.created_at},(m.sender===currentUser.username)?'self':'other'));
+    }
   }
 
   async function loadUsers(){
@@ -133,35 +142,32 @@ document.addEventListener('DOMContentLoaded', () => {
       const circle=createProfileCircle(u.username); const nameEl=document.createElement('span'); nameEl.className='username'; nameEl.textContent=u.username;
       const dot=document.createElement('span'); dot.className='dot'; dot.style.background=onlineSet.has(u.username)?'#0f0':'#555';
       item.appendChild(circle); item.appendChild(nameEl); item.appendChild(dot);
-      item.onclick=()=>openPrivateChat(u.username);
+      
+      // 👇 toggle DM when clicked
+      item.onclick=()=>{
+        if(currentChat.type==='private' && currentChat.target===u.username){
+          currentChat={ type:'global', target:null };
+        }else if(u.username!==currentUser.username){
+          currentChat={ type:'private', target:u.username };
+        }
+        loadMessages();
+      };
+      
       userListEl.appendChild(item);
     });
-  }
-
-  async function openPrivateChat(username){
-    if(username===currentUser.username)return;
-    currentChat={ type:'private', target:username }; chatHeader.textContent=`Chat with ${username}`; messagesEl.innerHTML='';
-    const { data } = await supabaseClient.from('private_messages')
-      .select('*')
-      .or(`and(sender.eq.${currentUser.username},receiver.eq.${username}),and(sender.eq.${username},receiver.eq.${currentUser.username})`)
-      .order('created_at',{ascending:true});
-    data.forEach(m=>appendMessage({username:m.sender,message:m.message,created_at:m.created_at},(m.sender===currentUser.username)?'self':'other'));
-    subscribePrivate(username);
   }
 
   function subscribeMessages(){
     supabaseClient.channel('messages')
       .on('postgres_changes',{ event:'INSERT', schema:'public', table:'global_messages' },payload=>{
-        const m=payload.new; if(m.username!==currentUser.username)appendMessage(m,'other');
+        const m=payload.new; if(currentChat.type==='global' && m.username!==currentUser.username)appendMessage(m,'other');
       }).subscribe();
-  }
 
-  function subscribePrivate(username){
-    supabaseClient.channel(`private-${username}-${currentUser.username}`)
+    supabaseClient.channel('privates')
       .on('postgres_changes',{ event:'INSERT', schema:'public', table:'private_messages' },payload=>{
         const m=payload.new;
-        if((m.sender===username&&m.receiver===currentUser.username)||(m.receiver===username&&m.sender===currentUser.username)){
-          if(m.sender!==currentUser.username) appendMessage({username:m.sender,message:m.message,created_at:m.created_at},'other');
+        if((m.sender===currentChat.target && m.receiver===currentUser.username) || (m.receiver===currentChat.target && m.sender===currentUser.username)){
+          if(currentChat.type==='private') appendMessage({username:m.sender,message:m.message,created_at:m.created_at},(m.sender===currentUser.username)?'self':'other');
         }
       }).subscribe();
   }
@@ -190,6 +196,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 </script>
-
 </body>
 </html>
+
